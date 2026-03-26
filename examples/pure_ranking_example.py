@@ -1,5 +1,7 @@
 import time
 
+import importlib.util
+
 import pandas as pd
 import tensorflow as tf
 
@@ -7,19 +9,19 @@ from libreco.algorithms import (
     ALS,
     BPR,
     NCF,
-    NGCF,
     SVD,
     Caser,
     DeepWalk,
     Item2Vec,
     ItemCF,
-    LightGCN,
     RNN4Rec,
     SVDpp,
     UserCF,
     WaveNet,
 )
 from libreco.data import DatasetPure, split_by_ratio_chrono
+
+HAS_GENSIM = importlib.util.find_spec("gensim") is not None
 
 
 def reset_state(name):
@@ -50,63 +52,6 @@ if __name__ == "__main__":
         "map",
         "ndcg",
     ]
-
-    reset_state("NGCF")
-    ngcf = NGCF(
-        "ranking",
-        data_info,
-        loss_type="cross_entropy",
-        embed_size=16,
-        n_epochs=2,
-        lr=3e-4,
-        lr_decay=False,
-        reg=0.0,
-        batch_size=2048,
-        num_neg=1,
-        node_dropout=0.0,
-        message_dropout=0.0,
-        hidden_units=(64, 64, 64),
-        device="cuda",
-    )
-    ngcf.fit(
-        train_data,
-        neg_sampling=True,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", ngcf.predict(user=1, item=2333))
-    print("recommendation: ", ngcf.recommend_user(user=1, n_rec=7))
-    print("batch recommendation: ", ngcf.recommend_user(user=[1, 2, 3], n_rec=7))
-
-    reset_state("LightGCN")
-    lightgcn = LightGCN(
-        "ranking",
-        data_info,
-        loss_type="bpr",
-        embed_size=16,
-        n_epochs=2,
-        lr=3e-4,
-        lr_decay=False,
-        reg=0.0,
-        batch_size=2048,
-        num_neg=1,
-        dropout_rate=0.0,
-        n_layers=3,
-        device="cuda",
-    )
-    lightgcn.fit(
-        train_data,
-        neg_sampling=True,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", lightgcn.predict(user=1, item=2333))
-    print("recommendation: ", lightgcn.recommend_user(user=1, n_rec=7))
-    print("batch recommendation: ", lightgcn.recommend_user(user=[1, 2, 3], n_rec=7))
 
     reset_state("SVD")
     svd = SVD(
@@ -316,49 +261,52 @@ if __name__ == "__main__":
     print("prediction: ", wave.predict(user=1, item=2333))
     print("recommendation: ", wave.recommend_user(user=1, n_rec=7))
 
-    reset_state("Item2Vec")
-    item2vec = Item2Vec(
-        "ranking",
-        data_info,
-        embed_size=16,
-        norm_embed=False,
-        window_size=3,
-        n_epochs=2,
-        n_threads=0,
-    )
-    item2vec.fit(
-        train_data,
-        neg_sampling=True,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", item2vec.predict(user=1, item=2333))
-    print("recommendation: ", item2vec.recommend_user(user=1, n_rec=7))
+    if HAS_GENSIM:
+        reset_state("Item2Vec")
+        item2vec = Item2Vec(
+            "ranking",
+            data_info,
+            embed_size=16,
+            norm_embed=False,
+            window_size=3,
+            n_epochs=2,
+            n_threads=0,
+        )
+        item2vec.fit(
+            train_data,
+            neg_sampling=True,
+            verbose=2,
+            shuffle=True,
+            eval_data=eval_data,
+            metrics=metrics,
+        )
+        print("prediction: ", item2vec.predict(user=1, item=2333))
+        print("recommendation: ", item2vec.recommend_user(user=1, n_rec=7))
 
-    reset_state("DeepWalk")
-    deepwalk = DeepWalk(
-        "ranking",
-        data_info,
-        embed_size=16,
-        norm_embed=False,
-        n_walks=10,
-        walk_length=10,
-        window_size=5,
-        n_epochs=2,
-        n_threads=0,
-    )
-    deepwalk.fit(
-        train_data,
-        neg_sampling=True,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", deepwalk.predict(user=1, item=2333))
-    print("recommendation: ", deepwalk.recommend_user(user=1, n_rec=7))
+        reset_state("DeepWalk")
+        deepwalk = DeepWalk(
+            "ranking",
+            data_info,
+            embed_size=16,
+            norm_embed=False,
+            n_walks=10,
+            walk_length=10,
+            window_size=5,
+            n_epochs=2,
+            n_threads=0,
+        )
+        deepwalk.fit(
+            train_data,
+            neg_sampling=True,
+            verbose=2,
+            shuffle=True,
+            eval_data=eval_data,
+            metrics=metrics,
+        )
+        print("prediction: ", deepwalk.predict(user=1, item=2333))
+        print("recommendation: ", deepwalk.recommend_user(user=1, n_rec=7))
+    else:
+        print("Skipping Item2Vec/DeepWalk because `gensim` is not installed.")
 
     reset_state("user_cf")
     user_cf = UserCF(

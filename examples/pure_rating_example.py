@@ -1,16 +1,9 @@
 import time
 
 import pandas as pd
-import tensorflow as tf
 
-from libreco.algorithms import ALS, NCF, SVD, ItemCF, RNN4Rec, SVDpp, UserCF
+from libreco.algorithms import ItemCF, UserCF
 from libreco.data import DatasetPure, split_by_ratio_chrono
-
-
-def reset_state(name):
-    tf.compat.v1.reset_default_graph()
-    print("\n", "=" * 30, name, "=" * 30)
-
 
 if __name__ == "__main__":
     start_time = time.perf_counter()
@@ -27,128 +20,6 @@ if __name__ == "__main__":
 
     metrics = ["rmse", "mae", "r2"]
 
-    reset_state("SVD")
-    svd = SVD(
-        "rating",
-        data_info,
-        embed_size=16,
-        n_epochs=3,
-        lr=0.001,
-        reg=None,
-        batch_size=256,
-        num_neg=1,
-    )
-    svd.fit(
-        train_data,
-        neg_sampling=False,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", svd.predict(user=1, item=2333))
-    print("recommendation: ", svd.recommend_user(user=1, n_rec=7))
-
-    reset_state("SVD++")
-    svdpp = SVDpp(
-        task="rating",
-        data_info=data_info,
-        embed_size=16,
-        n_epochs=3,
-        lr=0.001,
-        reg=None,
-        batch_size=256,
-    )
-    svdpp.fit(
-        train_data,
-        neg_sampling=False,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", svdpp.predict(user=1, item=2333))
-    print("recommendation: ", svdpp.recommend_user(user=1, n_rec=7))
-
-    reset_state("NCF")
-    ncf = NCF(
-        "rating",
-        data_info,
-        embed_size=16,
-        n_epochs=3,
-        lr=0.001,
-        lr_decay=False,
-        reg=None,
-        batch_size=256,
-        num_neg=1,
-        use_bn=True,
-        dropout_rate=None,
-        hidden_units=(128, 64, 32),
-        tf_sess_config=None,
-    )
-    ncf.fit(
-        train_data,
-        neg_sampling=False,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", ncf.predict(user=1, item=2333))
-    print("recommendation: ", ncf.recommend_user(user=1, n_rec=7))
-
-    reset_state("RNN4Rec")
-    rnn = RNN4Rec(
-        "rating",
-        data_info,
-        rnn_type="lstm",
-        embed_size=16,
-        n_epochs=2,
-        lr=0.001,
-        lr_decay=False,
-        hidden_units=(16, 16),
-        reg=None,
-        batch_size=256,
-        num_neg=1,
-        dropout_rate=None,
-        recent_num=10,
-        tf_sess_config=None,
-    )
-    rnn.fit(
-        train_data,
-        neg_sampling=False,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", rnn.predict(user=1, item=2333))
-    print("recommendation: ", rnn.recommend_user(user=1, n_rec=7))
-
-    reset_state("ALS")
-    als = ALS(
-        task="rating",
-        data_info=data_info,
-        embed_size=16,
-        n_epochs=2,
-        reg=5.0,
-        alpha=10,
-        use_cg=False,
-        n_threads=1,
-        seed=42,
-    )
-    als.fit(
-        train_data,
-        neg_sampling=False,
-        verbose=2,
-        shuffle=True,
-        eval_data=eval_data,
-        metrics=metrics,
-    )
-    print("prediction: ", als.predict(user=1, item=2333))
-    print("recommendation: ", als.recommend_user(user=1, n_rec=7))
-
-    reset_state("user_cf")
     user_cf = UserCF(
         task="rating",
         data_info=data_info,
@@ -168,7 +39,6 @@ if __name__ == "__main__":
     print("prediction: ", user_cf.predict(user=1, item=2333))
     print("recommendation: ", user_cf.recommend_user(user=1, n_rec=7))
 
-    reset_state("item_cf")
     item_cf = ItemCF(
         task="rating",
         data_info=data_info,

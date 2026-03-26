@@ -1,10 +1,18 @@
 import pandas as pd
+import tensorflow as tf
 
-from libreco.algorithms import LightGCN  # pure data, algorithm LightGCN
+from libreco.algorithms import BPR  # pure data, algorithm BPR
 from libreco.data import DatasetPure, random_split
 from libreco.evaluation import evaluate
 
+
+def reset_state(name):
+    tf.compat.v1.reset_default_graph()
+    print("\n", "=" * 30, name, "=" * 30)
+
+
 if __name__ == "__main__":
+    reset_state("BPR")
     data = pd.read_csv(
         "sample_data/sample_movielens_rating.dat",
         sep="::",
@@ -19,7 +27,7 @@ if __name__ == "__main__":
     test_data = DatasetPure.build_testset(test_data)
     print(data_info)  # n_users: 5894, n_items: 3253, data sparsity: 0.4172 %
 
-    lightgcn = LightGCN(
+    bpr = BPR(
         task="ranking",
         data_info=data_info,
         loss_type="bpr",
@@ -28,10 +36,9 @@ if __name__ == "__main__":
         lr=1e-3,
         batch_size=2048,
         num_neg=1,
-        device="cuda",
     )
     # monitor metrics on eval_data during training
-    lightgcn.fit(
+    bpr.fit(
         train_data,
         neg_sampling=True,  # sample negative items for train and eval data
         verbose=2,
@@ -43,24 +50,24 @@ if __name__ == "__main__":
     print(
         "evaluate_result: ",
         evaluate(
-            model=lightgcn,
+            model=bpr,
             data=test_data,
             neg_sampling=True,  # sample negative items for test data
             metrics=["loss", "roc_auc", "precision", "recall", "ndcg"],
         ),
     )
     # predict preference of user 2211 to item 110
-    print("prediction: ", lightgcn.predict(user=2211, item=110))
+    print("prediction: ", bpr.predict(user=2211, item=110))
     # recommend 7 items for user 2211
-    print("recommendation: ", lightgcn.recommend_user(user=2211, n_rec=7))
+    print("recommendation: ", bpr.recommend_user(user=2211, n_rec=7))
 
     # cold-start prediction
     print(
         "cold prediction: ",
-        lightgcn.predict(user="ccc", item="not item", cold_start="average"),
+        bpr.predict(user="ccc", item="not item", cold_start="average"),
     )
     # cold-start recommendation
     print(
         "cold recommendation: ",
-        lightgcn.recommend_user(user="are we good?", n_rec=7, cold_start="popular"),
+        bpr.recommend_user(user="are we good?", n_rec=7, cold_start="popular"),
     )
