@@ -19,7 +19,7 @@
 
 **The main features are:**
 
-+ Implements a number of popular recommendation algorithms such as FM, DIN, LightGCN etc. See [full algorithm list](#references).
++ Implements a number of popular recommendation algorithms such as FM, DIN, BPR etc. See [full algorithm list](#references).
 + A hybrid recommender system, which allows user to use either collaborative-filtering or content-based features. New features can be added on the fly.
 + Low memory usage, automatically converts categorical and multi-value categorical features to sparse representation.
 + Supports training for both explicit and implicit datasets, as well as negative sampling on implicit data.
@@ -36,10 +36,9 @@
 #### _pure collaborative-filtering example_ : 
 
 ```python
-import numpy as np
 import pandas as pd
 from libreco.data import random_split, DatasetPure
-from libreco.algorithms import LightGCN  # pure data, algorithm LightGCN
+from libreco.algorithms import BPR  # pure data, algorithm BPR
 from libreco.evaluation import evaluate
 
 data = pd.read_csv("examples/sample_data/sample_movielens_rating.dat", sep="::",
@@ -53,7 +52,7 @@ eval_data = DatasetPure.build_evalset(eval_data)
 test_data = DatasetPure.build_testset(test_data)
 print(data_info)  # n_users: 5894, n_items: 3253, data sparsity: 0.4172 %
 
-lightgcn = LightGCN(
+bpr = BPR(
     task="ranking",
     data_info=data_info,
     loss_type="bpr",
@@ -62,10 +61,9 @@ lightgcn = LightGCN(
     lr=1e-3,
     batch_size=2048,
     num_neg=1,
-    device="cuda",
 )
 # monitor metrics on eval data during training
-lightgcn.fit(
+bpr.fit(
     train_data,
     neg_sampling=True,
     verbose=2,
@@ -75,21 +73,21 @@ lightgcn.fit(
 
 # do final evaluation on test data
 evaluate(
-    model=lightgcn,
+    model=bpr,
     data=test_data,
     neg_sampling=True,
     metrics=["loss", "roc_auc", "precision", "recall", "ndcg"],
 )
 
 # predict preference of user 2211 to item 110
-lightgcn.predict(user=2211, item=110)
+bpr.predict(user=2211, item=110)
 # recommend 7 items for user 2211
-lightgcn.recommend_user(user=2211, n_rec=7)
+bpr.recommend_user(user=2211, n_rec=7)
 
 # cold-start prediction
-lightgcn.predict(user="ccc", item="not item", cold_start="average")
+bpr.predict(user="ccc", item="not item", cold_start="average")
 # cold-start recommendation
-lightgcn.recommend_user(user="are we good?", n_rec=7, cold_start="popular")
+bpr.recommend_user(user="are we good?", n_rec=7, cold_start="popular")
 ```
 
 #### _include features example_ : 
@@ -190,15 +188,12 @@ $ pip install .
 
 - Python >= 3.6
 - TensorFlow >= 1.15, < 2.16
-- PyTorch >= 1.10
 - Numpy >= 1.19.5
 - Pandas >= 1.0.0
 - Scipy >= 1.2.1, < 1.13.0
 - scikit-learn >= 0.20.0
-- gensim >= 4.0.0
 - tqdm
 - [nmslib](https://github.com/nmslib/nmslib) (optional, used in approximate similarity searching. See [Embedding](https://librecommender.readthedocs.io/en/latest/user_guide/embedding.html))
-- [DGL](https://github.com/dmlc/dgl) (optional, used in GraphSage and PinSage. See [Implementation Details](https://librecommender.readthedocs.io/en/latest/internal/implementation_details.html#pinsage))
 - Cython >= 0.29.0, < 3 (optional, for building from source)
 
 If you are using Python 3.6, you also need to install [dataclasses](https://github.com/ericvsmith/dataclasses), which was first introduced in Python 3.7.
@@ -258,15 +253,9 @@ One can also use the library in a docker container without installing dependenci
 |  YouTubeRanking   |                       feat                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                                                    | [Deep Neural Networks for YouTube Recommendations](<https://static.googleusercontent.com/media/research.google.com/zh-CN//pubs/archive/45530.pdf>)                                                                                                                                                                                                               |
 |      AutoInt      |                       feat                        |     TensorFlow1     |                                                   |                                                |                                                    | [AutoInt](https://arxiv.org/pdf/1810.11921.pdf)                                                                                                                                                                                                                                                                                                                  |
 |        DIN        |                       feat                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                                                    | [Deep Interest Network](https://arxiv.org/pdf/1706.06978.pdf)                                                                                                                                                                                                                                                                                                    |
-|     Item2Vec      |                       pure                        |          /          |                :heavy_check_mark:                 |                                                |                 :heavy_check_mark:                 | [Item2Vec](https://arxiv.org/pdf/1603.04259.pdf)                                                                                                                                                                                                                                                                                                                 |
 | RNN4Rec / GRU4Rec |                       pure                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                 :heavy_check_mark:                 | [Session-based Recommendations with Recurrent Neural Networks](https://arxiv.org/pdf/1511.06939.pdf)                                                                                                                                                                                                                                                             |
 |       Caser       |                       pure                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                 :heavy_check_mark:                 | [Personalized Top-N Sequential Recommendation via Convolutional](https://arxiv.org/pdf/1809.07426.pdf)                                                                                                                                                                                                                                                           |
 |      WaveNet      |                       pure                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                 :heavy_check_mark:                 | [WaveNet: A Generative Model for Raw Audio](https://arxiv.org/pdf/1609.03499.pdf)                                                                                                                                                                                                                                                                                |
-|     DeepWalk      |                       pure                        |          /          |                                                   |               :heavy_check_mark:               |                 :heavy_check_mark:                 | [DeepWalk](https://arxiv.org/pdf/1403.6652.pdf)                                                                                                                                                                                                                                                                                                                  |
-|       NGCF        |                       pure                        |       PyTorch       |                                                   |               :heavy_check_mark:               |                 :heavy_check_mark:                 | [Neural Graph Collaborative Filtering](https://arxiv.org/pdf/1905.08108.pdf)                                                                                                                                                                                                                                                                                     |
-|     LightGCN      |                       pure                        |       PyTorch       |                                                   |               :heavy_check_mark:               |                 :heavy_check_mark:                 | [LightGCN](https://arxiv.org/pdf/2002.02126.pdf)                                                                                                                                                                                                                                                                                                                 |
-|     GraphSage     |                       feat                        |    DGL, PyTorch     |                                                   |               :heavy_check_mark:               |                 :heavy_check_mark:                 | [Inductive Representation Learning on Large Graphs](https://arxiv.org/abs/1706.02216)                                                                                                                                                                                                                                                                            |
-|      PinSage      |                       feat                        |    DGL, PyTorch     |                                                   |               :heavy_check_mark:               |                 :heavy_check_mark:                 | [Graph Convolutional Neural Networks for Web-Scale](https://arxiv.org/abs/1806.01973)                                                                                                                                                                                                                                                                            |
 |     TwoTower      |                       feat                        |     TensorFlow1     |                                                   |                                                |                 :heavy_check_mark:                 | 1. [Sampling-Bias-Corrected Neural Modeling for Large Corpus Item](https://storage.googleapis.com/pub-tools-public-publication-data/pdf/6c8a86c981a62b0126a11896b7f6ae0dae4c3566.pdf)  <br>2. [Self-supervised Learning for Large-scale Item](https://arxiv.org/pdf/2007.12865.pdf)                                                                              |
 |    Transformer    |                       feat                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                                                    | 1. [BST](https://arxiv.org/pdf/1905.06874.pdf)  <br>2. [Transformers4Rec](https://dl.acm.org/doi/10.1145/3460231.3474255) <br>3. [RMSNorm](https://arxiv.org/pdf/1910.07467.pdf)                                                                                                                                                                                 |
 |        SIM        |                       feat                        |     TensorFlow1     |                :heavy_check_mark:                 |                                                |                                                    | [SIM](https://arxiv.org/pdf/2006.05639.pdf)                                                                                                                                                                                                                                                                                                                      |

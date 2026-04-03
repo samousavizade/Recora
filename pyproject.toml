@@ -36,7 +36,6 @@ classifiers = [
     "Programming Language :: Rust",
 ]
 dependencies = [
-    "gensim >= 4.0.0",
     "tqdm",
 ]
 
@@ -80,9 +79,7 @@ addopts = "-v --durations=20 --color=yes"
 filterwarnings = [
     "ignore:the imp module is deprecated in favour of importlib:DeprecationWarning",
     "ignore:distutils Version classes are deprecated. Use packaging.version instead:DeprecationWarning",
-    "ignore:The gensim.similarities.levenshtein submodule is disabled, because the optional Levenshtein package:UserWarning",
     "ignore:.(tf.layers|layer|tf.nn).* is deprecated:UserWarning",
-    "ignore:User provided device_type of 'cuda', but CUDA is not available:UserWarning",
     "ignore:`build_negative_samples` is deprecated",
 ]
 

@@ -16,7 +16,6 @@ from ..utils.save_load import (
     save_default_recs,
     save_params,
     save_tf_variables,
-    save_torch_state_dict,
 )
 from ..utils.validate import check_fitting, check_unknown_user
 
@@ -118,7 +117,7 @@ class EmbedBase(Base):
 
             .. CAUTION::
                Using multiprocessing(``num_workers`` > 0) may consume more memory than
-               single processing. See `Multi-process data loading <https://pytorch.org/docs/stable/data.html#multi-process-data-loading>`_.
+               single processing.
 
         Raises
         ------
@@ -295,8 +294,6 @@ class EmbedBase(Base):
             )
         elif hasattr(self, "sess"):
             save_tf_variables(self.sess, path, model_name, inference_only=False)
-        elif hasattr(self, "torch_model"):
-            save_torch_state_dict(self, path, model_name)
 
     @classmethod
     def load(cls, path, model_name, data_info, **kwargs):

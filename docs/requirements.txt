@@ -8,8 +8,6 @@ scipy==1.8.1
 pandas==1.4.3
 scikit-learn==1.1.1
 tensorflow-cpu==2.10.1
-torch==1.11.0 --index-url https://download.pytorch.org/whl/cpu
-gensim>=4.0.0
 tqdm==4.64.0
 ujson==5.4.0
 redis==4.3.4

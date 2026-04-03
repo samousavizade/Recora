@@ -3,9 +3,8 @@ from io import StringIO
 import numpy as np
 import pandas as pd
 import pytest
-import torch
 
-from libreco.algorithms import DIN, LightGCN, PinSageDGL, RNN4Rec
+from libreco.algorithms import DIN, RNN4Rec, TwoTower
 from libreco.batch.batch_data import BatchData
 from libreco.batch.batch_unit import (
     PairFeats,
@@ -16,15 +15,8 @@ from libreco.batch.batch_unit import (
     TripleFeats,
 )
 from libreco.batch.collators import BaseCollator as NormalCollator
-from libreco.batch.collators import (
-    GraphDGLCollator,
-    PairwiseCollator,
-    PointwiseCollator,
-    SparseCollator,
-)
-from libreco.batch.enums import Backend
+from libreco.batch.collators import PairwiseCollator, PointwiseCollator, SparseCollator
 from libreco.data import DatasetFeat
-from libreco.graph.message import ItemMessageDGL, UserMessage
 from libreco.sampling.negatives import negatives_from_unconsumed
 from libreco.tfops import tf
 
@@ -73,11 +65,6 @@ def config_feat_data(request):
             "item_col": ["item_dense_col"],
         },
         {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
             "sparse_col": ["sex", "genre1"],
             "dense_col": ["age", "item_dense_col"],
             "user_col": ["sex", "age"],
@@ -88,57 +75,53 @@ def config_feat_data(request):
 )
 def test_normal_collator(config_feat_data):
     train_data, data_info = config_feat_data
-    tf_model = DIN("ranking", data_info, sampler=None)
-    torch_model = LightGCN("ranking", data_info, sampler=None)
+    din = DIN("ranking", data_info, sampler=None)
+    two_tower = TwoTower("ranking", data_info, loss_type="softmax", sampler=None)
     original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
 
-    tf_collator = NormalCollator(
-        tf_model, data_info, Backend.TF, separate_features=False
-    )
-    tf_batch = tf_collator(original_data)
-    assert isinstance(tf_batch, PointwiseBatch)
-    assert len(tf_batch.labels) == 3
-    assert isinstance(tf_batch.items, np.ndarray)
-    if tf_batch.sparse_indices is not None:
-        assert isinstance(tf_batch.sparse_indices, np.ndarray)
-        assert tf_batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
-    if tf_batch.dense_values is not None:
-        assert isinstance(tf_batch.dense_values, np.ndarray)
-        assert tf_batch.dense_values.shape[1] == len(data_info.dense_col.index)
-    assert isinstance(tf_batch.seqs.interacted_seq, np.ndarray)
-    assert tf_batch.seqs.interacted_seq.shape == (3, 10)
-    assert isinstance(tf_batch.seqs.interacted_len, np.ndarray)
-    assert tf_batch.seqs.interacted_len.shape == (3,)
-    tf_batch.seqs.repeat(3)
-    assert tf_batch.seqs.interacted_seq.shape == (9, 10)
-    assert tf_batch.seqs.interacted_len.shape == (9,)
+    normal_collator = NormalCollator(din, data_info, separate_features=False)
+    normal_batch = normal_collator(original_data)
+    assert isinstance(normal_batch, PointwiseBatch)
+    assert len(normal_batch.labels) == 3
+    assert isinstance(normal_batch.items, np.ndarray)
+    if normal_batch.sparse_indices is not None:
+        assert isinstance(normal_batch.sparse_indices, np.ndarray)
+        assert normal_batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
+    if normal_batch.dense_values is not None:
+        assert isinstance(normal_batch.dense_values, np.ndarray)
+        assert normal_batch.dense_values.shape[1] == len(data_info.dense_col.index)
+    assert isinstance(normal_batch.seqs.interacted_seq, np.ndarray)
+    assert normal_batch.seqs.interacted_seq.shape == (3, 10)
+    assert isinstance(normal_batch.seqs.interacted_len, np.ndarray)
+    assert normal_batch.seqs.interacted_len.shape == (3,)
+    normal_batch.seqs.repeat(3)
+    assert normal_batch.seqs.interacted_seq.shape == (9, 10)
+    assert normal_batch.seqs.interacted_len.shape == (9,)
     tf.reset_default_graph()
 
-    torch_collator = NormalCollator(
-        torch_model, data_info, Backend.TORCH, separate_features=True
-    )
-    torch_batch = torch_collator(original_data)
-    assert isinstance(torch_batch, PointwiseSepFeatBatch)
-    assert len(torch_batch.labels) == 3
-    assert isinstance(torch_batch.items, torch.Tensor)
-    if torch_batch.sparse_indices is not None:
-        assert isinstance(torch_batch.sparse_indices, PairFeats)
+    sep_collator = NormalCollator(two_tower, data_info, separate_features=True)
+    sep_batch = sep_collator(original_data)
+    assert isinstance(sep_batch, PointwiseSepFeatBatch)
+    assert len(sep_batch.labels) == 3
+    if sep_batch.sparse_indices is not None:
+        assert isinstance(sep_batch.sparse_indices, PairFeats)
     user_sparse_len = len(data_info.user_sparse_col.index)
     if user_sparse_len > 0:
-        assert isinstance(torch_batch.sparse_indices.user_feats, torch.Tensor)
-        assert torch_batch.sparse_indices.user_feats.shape[1] == user_sparse_len
+        assert isinstance(sep_batch.sparse_indices.user_feats, np.ndarray)
+        assert sep_batch.sparse_indices.user_feats.shape[1] == user_sparse_len
     item_sparse_len = len(data_info.item_sparse_col.index)
     if item_sparse_len > 0:
-        assert isinstance(torch_batch.sparse_indices.item_feats, torch.Tensor)
-        assert torch_batch.sparse_indices.item_feats.shape[1] == item_sparse_len
+        assert isinstance(sep_batch.sparse_indices.item_feats, np.ndarray)
+        assert sep_batch.sparse_indices.item_feats.shape[1] == item_sparse_len
     user_dense_len = len(data_info.user_dense_col.index)
-    if user_dense_len:
-        assert isinstance(torch_batch.dense_values.user_feats, torch.Tensor)
-        assert torch_batch.dense_values.user_feats.shape[1] == user_dense_len
+    if user_dense_len > 0:
+        assert isinstance(sep_batch.dense_values.user_feats, np.ndarray)
+        assert sep_batch.dense_values.user_feats.shape[1] == user_dense_len
     item_dense_len = len(data_info.item_dense_col.index)
     if item_dense_len > 0:
-        assert isinstance(torch_batch.dense_values.item_feats, torch.Tensor)
-        assert torch_batch.dense_values.item_feats.shape[1] == item_dense_len
+        assert isinstance(sep_batch.dense_values.item_feats, np.ndarray)
+        assert sep_batch.dense_values.item_feats.shape[1] == item_dense_len
+    tf.reset_default_graph()
 
 
 @pytest.mark.parametrize(
@@ -146,17 +129,6 @@ def test_normal_collator(config_feat_data):
     [
         {"sparse_col": [], "item_col": None},
         {"sparse_col": ["sex"], "dense_col": ["age"], "user_col": ["sex", "age"]},
-        {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
-            "sparse_col": ["sex"],
-            "dense_col": ["item_dense_col"],
-            "user_col": ["sex"],
-            "item_col": ["item_dense_col"],
-        },
         {
             "sparse_col": ["genre1"],
             "dense_col": ["item_dense_col"],
@@ -173,24 +145,24 @@ def test_normal_collator(config_feat_data):
 )
 def test_sparse_collator(config_feat_data):
     train_data, data_info = config_feat_data
-    tf_model = DIN("ranking", data_info, sampler=None)
+    model = DIN("ranking", data_info, sampler=None)
     original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
 
-    tf_collator = SparseCollator(tf_model, data_info, Backend.TF)
-    tf_batch = tf_collator(original_data)
-    assert isinstance(tf_batch, SparseBatch)
-    assert len(tf_batch.items) == 3
-    assert isinstance(tf_batch.items, np.ndarray)
-    if tf_batch.sparse_indices is not None:
-        assert isinstance(tf_batch.sparse_indices, np.ndarray)
-        assert tf_batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
-    if tf_batch.dense_values is not None:
-        assert isinstance(tf_batch.dense_values, np.ndarray)
-        assert tf_batch.dense_values.shape[1] == len(data_info.dense_col.index)
-    assert isinstance(tf_batch.seqs.interacted_indices, np.ndarray)
-    assert tf_batch.seqs.interacted_indices.shape == (3, 2)
-    assert isinstance(tf_batch.seqs.interacted_values, np.ndarray)
-    assert tf_batch.seqs.interacted_values.shape == (3,)
+    collator = SparseCollator(model, data_info)
+    batch = collator(original_data)
+    assert isinstance(batch, SparseBatch)
+    assert len(batch.items) == 3
+    assert isinstance(batch.items, np.ndarray)
+    if batch.sparse_indices is not None:
+        assert isinstance(batch.sparse_indices, np.ndarray)
+        assert batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
+    if batch.dense_values is not None:
+        assert isinstance(batch.dense_values, np.ndarray)
+        assert batch.dense_values.shape[1] == len(data_info.dense_col.index)
+    assert isinstance(batch.seqs.interacted_indices, np.ndarray)
+    assert batch.seqs.interacted_indices.shape == (3, 2)
+    assert isinstance(batch.seqs.interacted_values, np.ndarray)
+    assert batch.seqs.interacted_values.shape == (3,)
     tf.reset_default_graph()
 
 
@@ -199,17 +171,6 @@ def test_sparse_collator(config_feat_data):
     [
         {"sparse_col": [], "item_col": None},
         {"sparse_col": ["sex"], "dense_col": ["age"], "user_col": ["sex", "age"]},
-        {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
-            "sparse_col": ["sex"],
-            "dense_col": ["item_dense_col"],
-            "user_col": ["sex"],
-            "item_col": ["item_dense_col"],
-        },
         {
             "sparse_col": ["genre1"],
             "dense_col": ["item_dense_col"],
@@ -226,43 +187,28 @@ def test_sparse_collator(config_feat_data):
 )
 def test_pointwise_collator(config_feat_data):
     train_data, data_info = config_feat_data
-    tf_model = DIN("ranking", data_info, "cross_entropy", sampler="random", num_neg=2)
-    torch_model = LightGCN("ranking", data_info, "focal", sampler="random", num_neg=3)
+    model = DIN("ranking", data_info, "cross_entropy", sampler="random", num_neg=2)
     original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
 
-    tf_collator = PointwiseCollator(tf_model, data_info, Backend.TF)
-    tf_batch = tf_collator(original_data)
-    assert isinstance(tf_batch, PointwiseBatch)
-    assert len(tf_batch.users) == len(tf_batch.items) == len(tf_batch.labels) == 9
-    assert isinstance(tf_batch.items, np.ndarray)
-    assert np.all(tf_batch.labels[0::3] == 1.0)
-    assert np.all(tf_batch.labels[1::3] == 0.0)
-    assert np.all(tf_batch.labels[2::3] == 0.0)
-    if tf_batch.sparse_indices is not None:
-        assert isinstance(tf_batch.sparse_indices, np.ndarray)
-        assert tf_batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
-    if tf_batch.dense_values is not None:
-        assert isinstance(tf_batch.dense_values, np.ndarray)
-        assert tf_batch.dense_values.shape[1] == len(data_info.dense_col.index)
-    assert isinstance(tf_batch.seqs.interacted_seq, np.ndarray)
-    assert tf_batch.seqs.interacted_seq.shape == (9, 10)
-    assert isinstance(tf_batch.seqs.interacted_len, np.ndarray)
-    assert tf_batch.seqs.interacted_len.shape == (9,)
+    collator = PointwiseCollator(model, data_info)
+    batch = collator(original_data)
+    assert isinstance(batch, PointwiseBatch)
+    assert len(batch.users) == len(batch.items) == len(batch.labels) == 9
+    assert isinstance(batch.items, np.ndarray)
+    assert np.all(batch.labels[0::3] == 1.0)
+    assert np.all(batch.labels[1::3] == 0.0)
+    assert np.all(batch.labels[2::3] == 0.0)
+    if batch.sparse_indices is not None:
+        assert isinstance(batch.sparse_indices, np.ndarray)
+        assert batch.sparse_indices.shape[1] == len(data_info.sparse_col.index)
+    if batch.dense_values is not None:
+        assert isinstance(batch.dense_values, np.ndarray)
+        assert batch.dense_values.shape[1] == len(data_info.dense_col.index)
+    assert isinstance(batch.seqs.interacted_seq, np.ndarray)
+    assert batch.seqs.interacted_seq.shape == (9, 10)
+    assert isinstance(batch.seqs.interacted_len, np.ndarray)
+    assert batch.seqs.interacted_len.shape == (9,)
     tf.reset_default_graph()
-
-    torch_collator = PointwiseCollator(torch_model, data_info, Backend.TORCH)
-    torch_batch = torch_collator(original_data)
-    assert isinstance(torch_batch, PointwiseBatch)
-    assert len(torch_batch.users) == len(torch_batch.labels) == 12
-    assert isinstance(torch_batch.items, torch.Tensor)
-    sparse_len = len(data_info.sparse_col.index)
-    if sparse_len > 0:
-        assert isinstance(torch_batch.sparse_indices, torch.Tensor)
-        assert torch_batch.sparse_indices.shape[1] == sparse_len
-    dense_len = len(data_info.dense_col.index)
-    if dense_len > 0:
-        assert isinstance(torch_batch.dense_values, torch.Tensor)
-        assert torch_batch.dense_values.shape[1] == dense_len
 
 
 @pytest.mark.parametrize(
@@ -270,17 +216,6 @@ def test_pointwise_collator(config_feat_data):
     [
         {"sparse_col": [], "item_col": None},
         {"sparse_col": ["sex"], "dense_col": ["age"], "user_col": ["sex", "age"]},
-        {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
-            "sparse_col": ["sex"],
-            "dense_col": ["item_dense_col"],
-            "user_col": ["sex"],
-            "item_col": ["item_dense_col"],
-        },
         {
             "sparse_col": ["genre1"],
             "dense_col": ["item_dense_col"],
@@ -295,105 +230,81 @@ def test_pointwise_collator(config_feat_data):
     ],
     indirect=True,
 )
-def test_pairwise_collator(config_feat_data):
+def test_pairwise_sequence_collator(config_feat_data):
     train_data, data_info = config_feat_data
-    tf_model = RNN4Rec("ranking", data_info, "bpr", num_neg=2)
-    torch_model = LightGCN("ranking", data_info, "max_margin", num_neg=3)
+    model = RNN4Rec("ranking", data_info, "bpr", num_neg=2)
     original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
 
-    tf_collator = PairwiseCollator(
-        tf_model, data_info, Backend.TF, repeat_positives=True
-    )
-    tf_batch = tf_collator(original_data)
-    assert isinstance(tf_batch, PairwiseBatch)
-    assert len(tf_batch.queries) == 6
-    assert len(tf_batch.item_pairs[0]) == len(tf_batch.item_pairs[1]) == 6
-    assert isinstance(tf_batch.queries, np.ndarray)
-    assert np.all(tf_batch.queries[:2] == tf_batch.queries[0])
-    assert np.all(tf_batch.item_pairs[0][:2] == tf_batch.item_pairs[0][:1])
-    if tf_batch.sparse_indices is not None:
-        assert isinstance(tf_batch.sparse_indices, TripleFeats)
+    collator = PairwiseCollator(model, data_info, repeat_positives=True)
+    batch = collator(original_data)
+    assert isinstance(batch, PairwiseBatch)
+    assert len(batch.queries) == 6
+    assert len(batch.item_pairs[0]) == len(batch.item_pairs[1]) == 6
+    assert isinstance(batch.queries, np.ndarray)
+    assert np.all(batch.queries[:2] == batch.queries[0])
+    assert np.all(batch.item_pairs[0][:2] == batch.item_pairs[0][:1])
+    assert batch.sparse_indices is None
+    assert batch.dense_values is None
+    assert isinstance(batch.seqs.interacted_seq, np.ndarray)
+    assert batch.seqs.interacted_seq.shape == (6, 10)
+    assert isinstance(batch.seqs.interacted_len, np.ndarray)
+    assert batch.seqs.interacted_len.shape == (6,)
+    tf.reset_default_graph()
+
+
+@pytest.mark.parametrize(
+    "config_feat_data",
+    [
+        {"sparse_col": [], "item_col": None},
+        {"sparse_col": ["sex"], "dense_col": ["age"], "user_col": ["sex", "age"]},
+        {
+            "sparse_col": ["genre1"],
+            "dense_col": ["item_dense_col"],
+            "item_col": ["genre1", "item_dense_col"],
+        },
+        {
+            "sparse_col": ["sex", "genre1"],
+            "dense_col": ["age", "item_dense_col"],
+            "user_col": ["sex", "age"],
+            "item_col": ["genre1", "item_dense_col"],
+        },
+    ],
+    indirect=True,
+)
+def test_pairwise_separate_features_collator(config_feat_data):
+    train_data, data_info = config_feat_data
+    model = TwoTower("ranking", data_info, "max_margin", num_neg=3)
+    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
+
+    collator = PairwiseCollator(model, data_info, repeat_positives=True)
+    batch = collator(original_data)
+    assert isinstance(batch, PairwiseBatch)
+    assert len(batch.queries) == len(batch.item_pairs[0]) == len(batch.item_pairs[1]) == 9
+    assert isinstance(batch.queries, np.ndarray)
+    assert batch.seqs is None
+    assert isinstance(batch.sparse_indices, TripleFeats) or batch.sparse_indices is None
+    assert isinstance(batch.dense_values, TripleFeats) or batch.dense_values is None
     user_sparse_len = len(data_info.user_sparse_col.index)
     if user_sparse_len > 0:
-        assert isinstance(tf_batch.sparse_indices.query_feats, np.ndarray)
-        assert tf_batch.sparse_indices.query_feats.shape[1] == user_sparse_len
+        assert isinstance(batch.sparse_indices.query_feats, np.ndarray)
+        assert batch.sparse_indices.query_feats.shape[1] == user_sparse_len
     item_sparse_len = len(data_info.item_sparse_col.index)
     if item_sparse_len > 0:
-        assert isinstance(tf_batch.sparse_indices.item_pos_feats, np.ndarray)
-        assert tf_batch.sparse_indices.item_pos_feats.shape[1] == item_sparse_len
+        assert isinstance(batch.sparse_indices.item_pos_feats, np.ndarray)
+        assert batch.sparse_indices.item_pos_feats.shape[1] == item_sparse_len
+        assert isinstance(batch.sparse_indices.item_neg_feats, np.ndarray)
+        assert batch.sparse_indices.item_neg_feats.shape[1] == item_sparse_len
     user_dense_len = len(data_info.user_dense_col.index)
-    if user_dense_len:
-        assert isinstance(tf_batch.dense_values.query_feats, np.ndarray)
-        assert tf_batch.dense_values.query_feats.shape[1] == user_dense_len
+    if user_dense_len > 0:
+        assert isinstance(batch.dense_values.query_feats, np.ndarray)
+        assert batch.dense_values.query_feats.shape[1] == user_dense_len
     item_dense_len = len(data_info.item_dense_col.index)
     if item_dense_len > 0:
-        assert isinstance(tf_batch.dense_values.item_neg_feats, np.ndarray)
-        assert tf_batch.dense_values.item_neg_feats.shape[1] == item_dense_len
-    assert isinstance(tf_batch.seqs.interacted_seq, np.ndarray)
-    assert tf_batch.seqs.interacted_seq.shape == (6, 10)
-    assert isinstance(tf_batch.seqs.interacted_len, np.ndarray)
-    assert tf_batch.seqs.interacted_len.shape == (6,)
+        assert isinstance(batch.dense_values.item_pos_feats, np.ndarray)
+        assert batch.dense_values.item_pos_feats.shape[1] == item_dense_len
+        assert isinstance(batch.dense_values.item_neg_feats, np.ndarray)
+        assert batch.dense_values.item_neg_feats.shape[1] == item_dense_len
     tf.reset_default_graph()
-
-    torch_collator = PairwiseCollator(
-        torch_model, data_info, Backend.TORCH, repeat_positives=False
-    )
-    torch_batch = torch_collator(original_data)
-    assert isinstance(torch_batch, PairwiseBatch)
-    assert len(torch_batch.queries) == len(torch_batch.item_pairs[0]) == 3
-    assert len(torch_batch.item_pairs[1]) == 9
-    assert isinstance(torch_batch.queries, torch.Tensor)
-
-
-@pytest.mark.parametrize(
-    "config_feat_data",
-    [
-        {"sparse_col": [], "item_col": None},
-        {"sparse_col": ["sex"], "dense_col": ["age"], "user_col": ["sex", "age"]},
-        {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
-            "sparse_col": ["sex"],
-            "dense_col": ["item_dense_col"],
-            "user_col": ["sex"],
-            "item_col": ["item_dense_col"],
-        },
-        {
-            "sparse_col": ["genre1"],
-            "dense_col": ["item_dense_col"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-        {
-            "sparse_col": ["sex", "genre1"],
-            "dense_col": ["age", "item_dense_col"],
-            "user_col": ["sex", "age"],
-            "item_col": ["genre1", "item_dense_col"],
-        },
-    ],
-    indirect=True,
-)
-def test_graph_dgl_collator(config_feat_data):
-    train_data, data_info = config_feat_data
-    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
-
-    u2i_model = PinSageDGL("ranking", data_info, "bpr", paradigm="u2i", num_neg=3)
-    u2i_model.build_model()
-    collator = GraphDGLCollator(u2i_model, data_info, Backend.TORCH)
-    user_data, item_data, *_ = collator(original_data)
-    assert isinstance(user_data, UserMessage)
-    assert isinstance(item_data, ItemMessageDGL)
-    assert isinstance(user_data.users, torch.Tensor)
-    assert isinstance(item_data.items, torch.Tensor)
-    assert len(user_data.users) == 3
-
-    i2i_model = PinSageDGL("ranking", data_info, "focal", paradigm="i2i", num_neg=1)
-    i2i_model.build_model()
-    collator = GraphDGLCollator(i2i_model, data_info, Backend.TORCH)
-    item_data, *_ = collator(original_data)
-    assert isinstance(item_data, ItemMessageDGL)
 
 
 def test_negatives_exceed_sampling_tolerance():

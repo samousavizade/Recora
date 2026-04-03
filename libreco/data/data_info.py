@@ -152,7 +152,7 @@ class DataInfo:
         self._id2item = None
         self._data_size = None
         self._popular_items = None
-        # store old info for rebuild models
+        # store old info for rebuild tf models
         self.old_info = None
         self.all_args = locals()
         self.add_oovs()
@@ -566,7 +566,7 @@ def store_old_info(data_info):
             and col in data_info.col_name_mapping["multi_sparse"]
         ):
             # multi_sparse case, second to last cols are redundant.
-            # Used in `rebuild_tf_model`, `rebuild_torch_model`
+            # Used in `rebuild_tf_model`
             sparse_len.append(-1)
 
     return OldInfo(

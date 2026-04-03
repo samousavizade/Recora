@@ -1,6 +1,5 @@
 from .tf_trainer import TensorFlowTrainer, WideDeepTrainer, YoutubeRetrievalTrainer
-from .torch_trainer import GraphTrainer, TorchTrainer
-from ..utils.constants import SageModels, TfTrainModels
+from ..utils.constants import TfTrainModels
 
 
 def get_trainer(model):
@@ -26,17 +25,4 @@ def get_trainer(model):
         else:
             tf_trainer_cls = TensorFlowTrainer
         return tf_trainer_cls(**train_params)
-    else:
-        train_params.update(
-            {
-                "amsgrad": model.amsgrad,
-                "reg": model.reg,
-                "margin": model.margin,
-                "device": model.device,
-            }
-        )
-        if SageModels.contains(model.model_name):
-            torch_trainer_cls = GraphTrainer
-        else:
-            torch_trainer_cls = TorchTrainer
-        return torch_trainer_cls(**train_params)
+    raise ValueError(f"unsupported model for TensorFlow-only runtime: {model.model_name}")

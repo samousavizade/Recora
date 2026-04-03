@@ -2,8 +2,7 @@
 from ..bases import DynEmbedBase, ModelMeta
 from ..layers import embedding_lookup, normalize_embeds, tf_dense, tf_rnn
 from ..tfops import dropout_config, reg_config, tf
-from ..torchops import hidden_units_config
-from ..utils.misc import count_params
+from ..utils.misc import count_params, hidden_units_config
 
 
 class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):

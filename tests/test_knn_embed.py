@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from libreco.algorithms import ALS, LightGCN, RNN4Rec
+from libreco.algorithms import ALS, BPR, RNN4Rec
 from tests.utils_data import set_ranking_labels
 
 
@@ -23,28 +23,27 @@ def test_knn_embed(pure_data_small, monkeypatch):
     als.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
     ptest_knn(als, pd_data)
 
-    lightgcn = LightGCN(
+    bpr = BPR(
         "ranking",
         data_info,
-        loss_type="cross_entropy",
         embed_size=8,
         n_epochs=1,
         lr=1e-4,
         batch_size=20,
     )
-    lightgcn.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
-    ptest_knn(lightgcn, pd_data)
+    bpr.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
+    ptest_knn(bpr, pd_data)
 
     with pytest.raises(ValueError):
-        lightgcn.get_user_id(-1)
+        bpr.get_user_id(-1)
     with pytest.raises(ValueError):
-        lightgcn.get_item_id(-1)
+        bpr.get_item_id(-1)
 
     # test `approximate=True` when `nmslib` is unavailable
     with monkeypatch.context() as m:
         m.setitem(sys.modules, "nmslib", None)
         with pytest.raises((ImportError, ModuleNotFoundError)):
-            lightgcn.init_knn(approximate=True, sim_type="cosine")
+            bpr.init_knn(approximate=True, sim_type="cosine")
 
 
 def ptest_knn(model, pd_data):

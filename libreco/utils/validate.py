@@ -131,15 +131,6 @@ def check_neg_sampling(model, neg_sampling):
 
 
 def check_labels(model, labels, neg_sampling):
-    # still needs negative sampling when evaluating for these models
-    # if model.model_name in (
-    #    "YouTubeRetrieval",
-    #    "UserCF",
-    #    "ItemCF",
-    #    "Item2Vec",
-    #    "DeepWalk",
-    # ):
-    #    return
     if model.task == "ranking" and not neg_sampling:
         unique_labels = np.unique(labels)
         if (

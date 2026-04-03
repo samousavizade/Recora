@@ -32,8 +32,6 @@ From model serving's perspective, currently there are three kinds of models in L
 + embed-based model
 + tensorflow-based model.
 
-As for models trained with PyTorch, they all belong to embed-based model.
-
 The following is the main serving workflow:
 
 1. Serialize the trained model to disk.
@@ -151,9 +149,8 @@ Embed-based Model
 
 Embed-based models perform similarity searching on embeddings to make recommendation,
 so we only need to save a bunch of embeddings. This kind of model includes
-``SVD``, ``SVD++``, ``ALS``, ``BPR``, ``YouTubeRetrieval``, ``Item2Vec``, ``DeepWalk``,
-``RNN4Rec``, ``Caser``, ``WaveNet``, ``NGCF``, ``LightGCN``, ``GraphSage``, ``PinSage``,
-``TwoTower``.
+``SVD``, ``SVD++``, ``ALS``, ``BPR``, ``YouTubeRetrieval``, ``RNN4Rec``, ``Caser``,
+``WaveNet``, ``TwoTower``.
 
 In practice, to speed up serving, some ANN(Approximate Nearest Neighbors) libraries
 are often used to find similar embeddings. Here in ``libserving``, we use

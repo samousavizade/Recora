@@ -47,7 +47,7 @@ For the ``ranking`` task with implicit datasets, models treat 1 as positive labe
 However, implicit datasets typically **only** contain positive feedback, so negative sampling is necessary to train a model effectively.
 In this scenario, labels can be arbitrary values, as all samples will be treated as positive.
 
-By the way, some models such as ``BPR`` , ``YouTubeRetrieval``, ``YouTubeRanking``, ``Item2Vec``, ``DeepWalk``, ``LightGCN`` etc. ,
+By the way, some models such as ``BPR``, ``YouTubeRetrieval``, ``YouTubeRanking``, ``RNN4Rec``, ``Caser``, ``WaveNet``, ``Transformer`` and ``SIM``,
 can only be used for ``ranking`` tasks since they are specially designed for that.
 Errors might be raised if one use them for ``rating`` task.
 

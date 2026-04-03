@@ -10,7 +10,7 @@ but this is actually not easy for some deep learning models.
 The reason lies in the new users/items that may appear in the new data.
 In deep learning models, embedding variables are commonly used, and their shapes are preassigned and fixed during and after training.
 The same issue also goes with new features. If we load the old model and want to train it with new users/items/features,
-these embedding shapes must be expanded, which is not allowed in TensorFlow and PyTorch (Well, at least to my knowledge).
+these embedding shapes must be expanded, which is not allowed in TensorFlow.
 
 One workaround is to combine the new data with the old data, then retrain the model with all the data.
 But it would be a waste of time and resources to retrain on the whole data every time we get some new data.
@@ -27,8 +27,7 @@ i.e. the new user/item part, they are initialized randomly as usual.
 The problem with this solution is that we can not use TensorFlow's default method such as
 `tf.train.Saver <https://www.tensorflow.org/api_docs/python/tf/compat/v1/train/Saver>`_ or
 `tf.saved_model <https://tensorflow.google.cn/versions/r1.15/api_docs/python/tf/saved_model>`_,
-as well as PyTorch's default method such as `load_state_dict <https://pytorch.org/docs/stable/generated/torch.nn.Module.html?highlight=load_state_dict#torch.nn.Module.load_state_dict>`_
-, since these can only load to the exact same model with same shapes.
+since these can only load to the exact same model with same shapes.
 
 Things become even more desperate if we also want to save and restore the optimizers' variables,
 e.g. the first and second moments in Adam optimizer. Since these variables are used as states in optimizers,
@@ -43,8 +42,8 @@ update the new variables with old ones.
 
 So it's crucial to set ``manual=True, inference_only=False`` when you save the model, which means
 leveraging the numpy way. If you set ``manual=False``, the model may use the ``tf.train.Saver`` or
-`torch.save <https://pytorch.org/docs/stable/generated/torch.save.html>`_ to save
-the model, which is OK if you are certain that there will be no new user/item in new data.
+``tf.saved_model`` to save the model, which is OK if you are certain that there will be no new
+user/item in new data.
 
 .. literalinclude:: ../../../examples/model_retrain_example.py
    :caption: From file `examples/model_retrain_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/model_retrain_example.py>`_

@@ -16,10 +16,6 @@ class FeatModels(StrEnum):
     YOUTUBERANKING = "YouTubeRanking"
     AUTOINT = "AutoInt"
     DIN = "DIN"
-    GRAPHSAGE = "GraphSage"
-    GRAPHSAGEDGL = "GraphSageDGL"
-    PINSAGE = "PinSage"
-    PINSAGEDGL = "PinSageDGL"
     TWOTOWER = "TwoTower"
     TRANSFORMER = "Transformer"
     SIM = "SIM"
@@ -65,26 +61,10 @@ class EmbeddingModels(StrEnum):
     ALS = "ALS"
     BPR = "BPR"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
-    ITEM2VEC = "Item2Vec"
     RNN4REC = "RNN4Rec"
     CASER = "Caser"
     WAVENET = "WaveNet"
-    DEEPWALK = "DeepWalk"
-    NGCF = "NGCF"
-    LIGHTGCN = "LightGCN"
-    GRAPHSAGE = "GraphSage"
-    GRAPHSAGEDGL = "GraphSageDGL"
-    PINSAGE = "PinSage"
-    PINSAGEDGL = "PinSageDGL"
     TWOTOWER = "TwoTower"
-
-
-@unique
-class SageModels(StrEnum):
-    GRAPHSAGE = "GraphSage"
-    GRAPHSAGEDGL = "GraphSageDGL"
-    PINSAGE = "PinSage"
-    PINSAGEDGL = "PinSageDGL"
 
 
 @unique

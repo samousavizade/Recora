@@ -22,15 +22,15 @@ For example, using the `SVD` model with `rating` task:
 
 The implicit data typically may only contain positive feedback, i.e. only has samples that labeled as 1. In this case negative sampling is needed to effectively train a model. We'll cover negative sampling issue in the [section below](#negative-sampling).
 
-By the way, some models such as `BPR` , `YouTubeRetrieval`, `YouTubeRanking`, `Item2Vec`, `DeepWalk`, `LightGCN` etc. , can only be used for `ranking` tasks since they are specially designed for that. 
+By the way, some models such as `BPR`, `YouTubeRetrieval`, `YouTubeRanking`, `RNN4Rec`, `Caser`, `WaveNet`, `Transformer` and `SIM` can only be used for `ranking` tasks since they are specially designed for that.
 
 
 
 ## `Pure` and `Feat` model
 
-LibRecommender is a hybrid recommender system, which means you can choose whether to use features other than user behaviors or not. For models only use user behaviors, we classify them as  `pure` models. This category includes `UserCF`, `ItemCF`, `SVD`, `SVD++`, `ALS`, `NCF`, `BPR`, `RNN4Rec`, `Item2Vec`, `Caser`, `WaveNet`, `DeepWalk`, `NGCF`, `LightGCN`. 
+LibRecommender is a hybrid recommender system, which means you can choose whether to use features other than user behaviors or not. For models only use user behaviors, we classify them as `pure` models. This category includes `UserCF`, `ItemCF`, `SVD`, `SVD++`, `ALS`, `NCF`, `BPR`, `RNN4Rec`, `Caser`, `WaveNet`.
 
-Then for models that can include other features (e.g., age, sex, name etc.), we call them `feat` models. This category includes `WideDeep`, `FM`, `DeepFM`, `YouTubeRetrieval`, `YouTubeRanking`, `AutoInt`, `DIN`, `GraphSage`, `PinSage`.
+Then for models that can include other features (e.g., age, sex, name etc.), we call them `feat` models. This category includes `WideDeep`, `FM`, `DeepFM`, `YouTubeRetrieval`, `YouTubeRanking`, `AutoInt`, `DIN`, `TwoTower`, `Transformer`, `SIM`.
 
  The main difference on usage between these two kinds of models are:
 
@@ -44,9 +44,7 @@ You can find some typical usages in these files:
 + [`feat_rating_example.py`](https://github.com/massquantity/LibRecommender/blob/master/examples/feat_rating_example.py)
 + [`feat_ranking_example.py`](https://github.com/massquantity/LibRecommender/blob/master/examples/feat_ranking_example.py)
 
-In fact, there exists two other kinds of model categories in LibRecommender, and we call them `sequence` and `graph` models. You can find them in the [algorithm list](https://github.com/massquantity/LibRecommender#references).
-
-Sequence models leverage information of user behavior sequence, whereas Graph models leverage information from graph. As you can see, these models overlap with `pure` and `feat` models. But no need to worry, the APIs remain the same, and you can just refer to the examples above.
+Some models can also leverage user behavior sequence. These sequence-oriented models overlap with both `pure` and `feat` categories, while keeping the same training APIs.
 
 
 
@@ -196,8 +194,6 @@ The `eval_user_num` parameter controls how many users to use in evaluation. By d
 
 For implicit data with only positive labels, negative sampling is typically used in model training. There are some special cases, such as `UserCF`, `ItemCF`, `BPR`, `YouTubeRetrieval`, `RNN4Rec with bpr loss`, because these models do not need to do negative sampling during training. However, when evaluating these models using some metrics such as `cross_entropy loss`, `roc_auc`, `pr_auc`, negative labels are indeed needed. 
 
-For PyTorch-based models, **only eval or test data needs negative sampling**. These models includes `NGCF`, `LightGCN`, `GraphSage`, `GraphSageDGL`, `PinSage`, `PinSageDGL` , see [torch_ranking_example.py](https://github.com/massquantity/LibRecommender/blob/master/examples/torch_ranking_example.py) .
-
 For other models, performing negative sampling on all the train, eval and test data is recommended as long as **your data is implicit and only contains positive labels**.
 
 ```python
@@ -218,7 +214,7 @@ LibRecommender provides some options on loss type for `ranking` task. The defaul
 >>> model = Caser(task="ranking", loss_type="focal", ...)
 ```
 
-There are some special cases. Some algorithms are hard to assign explicit loss type, including `UserCF`, `ItemCF`, `ALS`, `Item2Vec`, `DeepWalk`, so they don't have `loss_type` parameter. Some algorithms can only use bpr loss, including `BPR`, `NGCF`, `LightGCN`, so don't bother to choose loss for them either.
+There are some special cases. Some algorithms are hard to assign explicit loss type, including `UserCF`, `ItemCF` and `ALS`, so they don't have `loss_type` parameter. Some algorithms can only use bpr loss, including `BPR`, so don't bother to choose loss for them either.
 
 The `YouTubeRetrieval` algorithm is also different, its `loss_type` is either `sampled_softmax` or `nce`. Finally, with `RNN4Rec` algorithm, one can choose three `loss_type`, i.e. `cross_entropy`, `focal`, `bpr`.
 

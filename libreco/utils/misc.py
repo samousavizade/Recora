@@ -4,15 +4,33 @@ from contextlib import contextmanager
 
 import numpy as np
 
-from ..tfops import tf
-
 
 def shuffle_data(np_rng, length, *args):
     mask = np_rng.permutation(range(length))
     return tuple(map(lambda x: x[mask], [*args]))
 
 
+def hidden_units_config(hidden_units):
+    if isinstance(hidden_units, int):
+        return [hidden_units]
+    elif not isinstance(hidden_units, (list, tuple)):
+        raise ValueError(
+            f"`hidden_units` must be one of (int, list of int, tuple of int), "
+            f"got: {type(hidden_units)}, {hidden_units}"
+        )
+    for i in hidden_units:
+        if not isinstance(i, int):
+            raise ValueError(f"`hidden_units` contains not int value: {hidden_units}")
+    return list(hidden_units)
+
+
+def transform_seed(seed, offset=0):
+    return (seed + offset) % 3407 * 11
+
+
 def count_params():
+    from ..tfops import tf
+
     total_params = np.sum(
         [np.prod(v.get_shape().as_list()) for v in tf.trainable_variables()]
     )

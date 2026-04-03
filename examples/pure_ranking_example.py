@@ -1,7 +1,5 @@
 import time
 
-import importlib.util
-
 import pandas as pd
 import tensorflow as tf
 
@@ -11,8 +9,6 @@ from libreco.algorithms import (
     NCF,
     SVD,
     Caser,
-    DeepWalk,
-    Item2Vec,
     ItemCF,
     RNN4Rec,
     SVDpp,
@@ -20,8 +16,6 @@ from libreco.algorithms import (
     WaveNet,
 )
 from libreco.data import DatasetPure, split_by_ratio_chrono
-
-HAS_GENSIM = importlib.util.find_spec("gensim") is not None
 
 
 def reset_state(name):
@@ -260,53 +254,6 @@ if __name__ == "__main__":
     )
     print("prediction: ", wave.predict(user=1, item=2333))
     print("recommendation: ", wave.recommend_user(user=1, n_rec=7))
-
-    if HAS_GENSIM:
-        reset_state("Item2Vec")
-        item2vec = Item2Vec(
-            "ranking",
-            data_info,
-            embed_size=16,
-            norm_embed=False,
-            window_size=3,
-            n_epochs=2,
-            n_threads=0,
-        )
-        item2vec.fit(
-            train_data,
-            neg_sampling=True,
-            verbose=2,
-            shuffle=True,
-            eval_data=eval_data,
-            metrics=metrics,
-        )
-        print("prediction: ", item2vec.predict(user=1, item=2333))
-        print("recommendation: ", item2vec.recommend_user(user=1, n_rec=7))
-
-        reset_state("DeepWalk")
-        deepwalk = DeepWalk(
-            "ranking",
-            data_info,
-            embed_size=16,
-            norm_embed=False,
-            n_walks=10,
-            walk_length=10,
-            window_size=5,
-            n_epochs=2,
-            n_threads=0,
-        )
-        deepwalk.fit(
-            train_data,
-            neg_sampling=True,
-            verbose=2,
-            shuffle=True,
-            eval_data=eval_data,
-            metrics=metrics,
-        )
-        print("prediction: ", deepwalk.predict(user=1, item=2333))
-        print("recommendation: ", deepwalk.recommend_user(user=1, n_rec=7))
-    else:
-        print("Skipping Item2Vec/DeepWalk because `gensim` is not installed.")
 
     reset_state("user_cf")
     user_cf = UserCF(

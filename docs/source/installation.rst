@@ -56,15 +56,12 @@ Dependencies for libreco:
 
 + Python >= 3.6
 + TensorFlow >= 1.15, < 2.16
-+ PyTorch >= 1.10
 + Numpy >= 1.19.5
 + Pandas >= 1.0.0
 + Scipy >= 1.2.1, < 1.13.0
 + scikit-learn >= 0.20.0
-+ gensim >= 4.0.0
 + tqdm
 + `nmslib <https://github.com/nmslib/nmslib>`_ (optional, see :doc:`user_guide/embedding`)
-+ `DGL <https://github.com/dmlc/dgl>`_ (optional, see :ref:`Implementation Details <pinsage>`)
 + Cython >= 0.29.0, < 3 (optional, for building from source)
 
 .. NOTE::

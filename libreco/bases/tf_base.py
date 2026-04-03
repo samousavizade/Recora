@@ -113,7 +113,7 @@ class TfBase(Base):
 
             .. CAUTION::
                Using multiprocessing(``num_workers`` > 0) may consume more memory than
-               single processing. See `Multi-process data loading <https://pytorch.org/docs/stable/data.html#multi-process-data-loading>`_.
+               single processing.
 
         Raises
         ------

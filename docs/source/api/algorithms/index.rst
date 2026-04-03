@@ -21,17 +21,9 @@ Algorithms
    youtube_ranking
    autoint
    din
-   item2vec
    rnn4rec
    caser
    wavenet
-   deepwalk
-   ngcf
-   lightgcn
-   graphsage
-   graphsage_dgl
-   pinsage
-   pinsage_dgl
    two_tower
    transformer
    sim

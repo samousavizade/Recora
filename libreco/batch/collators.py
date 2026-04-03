@@ -1,7 +1,6 @@
 import random
 
 import numpy as np
-import torch
 
 from .batch_unit import (
     DualSeqFeats,
@@ -17,28 +16,22 @@ from .batch_unit import (
 )
 from .enums import FeatType
 from .sequence import get_dual_seqs, get_interacted_seqs, get_sparse_interacted
-from ..graph import build_subgraphs, pairs_from_dgl_graph
 from ..sampling import (
     neg_probs_from_frequency,
-    negatives_from_out_batch,
     negatives_from_popular,
     negatives_from_random,
     negatives_from_unconsumed,
-    pairs_from_random_walk,
-    pos_probs_from_frequency,
 )
 from ..utils.constants import SequenceModels
 
 
+def set_worker_seed(collator, seed):
+    collator.worker_seed = seed
+    collator.np_rng = None
+
+
 class BaseCollator:
-    def __init__(
-        self,
-        model,
-        data_info,
-        backend,
-        separate_features=False,
-        temperature=0.75,
-    ):
+    def __init__(self, model, data_info, separate_features=False, temperature=0.75):
         self.n_users = data_info.n_users
         self.n_items = data_info.n_items
         self.user_consumed = data_info.user_consumed
@@ -56,8 +49,8 @@ class BaseCollator:
         self.long_max_len = model.long_max_len if self.dual_seq else None
         self.short_max_len = model.short_max_len if self.dual_seq else None
         self.separate_features = separate_features
-        self.backend = backend
         self.seed = model.seed
+        self.worker_seed = model.seed
         self.temperature = temperature
         self.user_consumed_set = None
         self.neg_probs = None
@@ -73,16 +66,14 @@ class BaseCollator:
             batch_cls = PointwiseSepFeatBatch
         else:
             batch_cls = PointwiseBatch
-        batch_data = batch_cls(
+        return batch_cls(
             users=batch["user"],
             items=batch["item"],
             labels=batch["label"],
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
-            backend=self.backend,
         )
-        return batch_data
 
     def get_col_index(self, feat_type):
         if feat_type is FeatType.SPARSE:
@@ -122,20 +113,20 @@ class BaseCollator:
                 self.user_consumed_set,
             )
             return DualSeqFeats(long_seqs, long_lens, short_seqs, short_lens)
-        else:
-            seqs, seq_lens = get_interacted_seqs(
-                user_indices,
-                item_indices,
-                self.user_consumed,
-                self.n_items,
-                self.seq_mode,
-                self.max_seq_len,
-                self.user_consumed_set,
-                self.np_rng,
-            )
-            return SeqFeats(seqs, seq_lens)
+        seqs, seq_lens = get_interacted_seqs(
+            user_indices,
+            item_indices,
+            self.user_consumed,
+            self.n_items,
+            self.seq_mode,
+            self.max_seq_len,
+            self.user_consumed_set,
+            self.np_rng,
+        )
+        return SeqFeats(seqs, seq_lens)
 
     def sample_neg_items(self, batch, sampler, num_neg):
+        self._set_random_seeds()
         if sampler == "unconsumed":
             self._set_user_consumed()
             items_neg = negatives_from_unconsumed(
@@ -146,7 +137,6 @@ class BaseCollator:
                 num_neg,
             )
         elif sampler == "popular":
-            self._set_random_seeds()
             self._set_neg_probs()
             items_neg = negatives_from_popular(
                 self.np_rng,
@@ -156,7 +146,6 @@ class BaseCollator:
                 probs=self.neg_probs,
             )
         else:
-            self._set_random_seeds()
             items_neg = negatives_from_random(
                 self.np_rng,
                 self.n_items,
@@ -179,18 +168,11 @@ class BaseCollator:
 
     def _set_random_seeds(self):
         if self.np_rng is None:
-            worker_info = torch.utils.data.get_worker_info()
-            seed = self.seed if worker_info is None else worker_info.seed
-            seed = seed % 3407 * 11
-            random.seed(seed)
-            torch.manual_seed(seed)
-            self.np_rng = np.random.default_rng(seed)
+            random.seed(self.worker_seed)
+            self.np_rng = np.random.default_rng(self.worker_seed)
 
 
 class SparseCollator(BaseCollator):
-    def __init__(self, model, data_info, backend):
-        super().__init__(model, data_info, backend)
-
     def __call__(self, batch):
         seq_batch = self.get_seqs(batch["user"], batch["item"])
         sparse_batch = self.get_features(batch, FeatType.SPARSE)
@@ -217,8 +199,8 @@ class SparseCollator(BaseCollator):
 
 
 class PointwiseCollator(BaseCollator):
-    def __init__(self, model, data_info, backend, separate_features=False):
-        super().__init__(model, data_info, backend, separate_features)
+    def __init__(self, model, data_info, separate_features=False):
+        super().__init__(model, data_info, separate_features)
         self.sampler = model.sampler
         self.num_neg = model.num_neg
 
@@ -240,16 +222,14 @@ class PointwiseCollator(BaseCollator):
             batch_cls = PointwiseSepFeatBatch
         else:
             batch_cls = PointwiseBatch
-        batch_data = batch_cls(
+        return batch_cls(
             users=user_batch,
             items=item_batch,
             labels=label_batch,
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
-            backend=self.backend,
         )
-        return batch_data
 
     def get_pointwise_feats(self, batch, feat_type, items):
         if feat_type.value not in batch:
@@ -268,8 +248,8 @@ class PointwiseCollator(BaseCollator):
 
 
 class PairwiseCollator(BaseCollator):
-    def __init__(self, model, data_info, backend, repeat_positives):
-        super().__init__(model, data_info, backend, separate_features=True)
+    def __init__(self, model, data_info, repeat_positives):
+        super().__init__(model, data_info, separate_features=True)
         self.sampler = model.sampler
         self.num_neg = model.num_neg
         self.repeat_positives = repeat_positives
@@ -288,15 +268,13 @@ class PairwiseCollator(BaseCollator):
         seq_batch = self.get_seqs(users, items_pos)
         if self.has_seq and not self.repeat_positives and self.num_neg > 1:
             seq_batch = seq_batch.repeat(self.num_neg)
-        batch_data = PairwiseBatch(
+        return PairwiseBatch(
             queries=users,
             item_pairs=(items_pos, items_neg),
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
-            backend=self.backend,
         )
-        return batch_data
 
     def get_pairwise_feats(self, batch, feat_type, items_neg):
         if feat_type.value not in batch:
@@ -317,144 +295,6 @@ class PairwiseCollator(BaseCollator):
             self, item_col_index, items_neg, feat_type
         )
         return TripleFeats(user_feats, item_pos_feats, item_neg_feats)
-
-
-class GraphCollator(BaseCollator):
-    def __init__(self, model, data_info, backend, alpha=1e-3):
-        super().__init__(model, data_info, backend)
-        self.neighbor_walker = model.neighbor_walker
-        self.paradigm = model.paradigm
-        self.sampler = model.sampler
-        self.num_neg = model.num_neg
-        self.num_walks = model.num_walks
-        self.walk_length = model.sample_walk_len
-        self.start_node = model.start_node
-        self.focus_start = model.focus_start
-        if self.start_node == "unpopular":
-            self.pos_probs = pos_probs_from_frequency(
-                self.item_consumed, self.n_users, self.n_items, alpha
-            )
-
-    def __call__(self, batch):
-        self._set_random_seeds()
-        if self.paradigm == "u2i":
-            users, items_pos = batch["user"], batch["item"]
-            items_neg = self.sample_neg_items(batch, self.sampler, self.num_neg)
-            user_data = self.neighbor_walker.get_user_feats(users)
-            item_pos_data = self.neighbor_walker(items_pos)
-            item_neg_data = self.neighbor_walker(items_neg)
-            return user_data, item_pos_data, item_neg_data
-        else:
-            start_nodes = self.get_start_nodes(batch)
-            items, items_pos = pairs_from_random_walk(
-                start_nodes,
-                self.user_consumed,
-                self.item_consumed,
-                self.num_walks,
-                self.walk_length,
-                self.focus_start,
-            )
-            items_neg = self.sample_i2i_negatives(items, items_pos)
-            item_data = self.neighbor_walker(items, items_pos)
-            item_pos_data = self.neighbor_walker(items_pos)
-            item_neg_data = self.neighbor_walker(items_neg)
-            return item_data, item_pos_data, item_neg_data
-
-    # exclude both items and items_pos
-    def sample_i2i_negatives(self, items, items_pos):
-        if self.sampler == "out-batch":
-            items_neg = negatives_from_out_batch(
-                self.np_rng, self.n_items, items_pos, items, self.num_neg
-            )
-        elif self.sampler == "popular":
-            items_neg = negatives_from_popular(
-                self.np_rng,
-                self.n_items,
-                items_pos,
-                self.num_neg,
-                items=items,
-                probs=self.neg_probs,
-            )
-        else:
-            items_neg = negatives_from_random(
-                self.np_rng,
-                self.n_items,
-                items_pos,
-                self.num_neg,
-                items=items,
-            )
-        return items_neg
-
-    def get_start_nodes(self, batch):
-        size = len(batch["item"])
-        if self.start_node == "unpopular":
-            population = range(self.n_items)
-            start_nodes = random.choices(population, weights=self.pos_probs, k=size)
-        else:
-            start_nodes = self.np_rng.integers(0, self.n_items, size=size)
-            start_nodes = start_nodes.tolist()
-        return start_nodes
-
-
-class GraphDGLCollator(GraphCollator):
-    def __init__(self, model, data_info, backend, alpha=1e-3):
-        super().__init__(model, data_info, backend, alpha)
-        self.graph = model.hetero_g
-        self.dgl = model._dgl
-        self.dgl_seed = None
-        if self.start_node == "unpopular":
-            self.pos_probs = torch.tensor(self.pos_probs, dtype=torch.float)
-
-    def __call__(self, batch):
-        self._set_random_seeds()
-        self._set_dgl_seeds()
-        if self.paradigm == "u2i":
-            users, items_pos = batch["user"], batch["item"]
-            items_neg = self.sample_neg_items(batch, self.sampler, self.num_neg)
-            # nodes in pos_graph and neg_graph are same, difference is the connected edges
-            pos_graph, neg_graph, *_ = build_subgraphs(
-                users, (items_pos, items_neg), self.paradigm, self.num_neg
-            )
-            # user -> item heterogeneous graph, users on srcdata, items on dstdata
-            all_users = pos_graph.srcdata[self.dgl.NID]
-            all_items = pos_graph.dstdata[self.dgl.NID]
-            user_data = self.neighbor_walker.get_user_feats(all_users)
-            item_data = self.neighbor_walker(all_items)
-            return user_data, item_data, pos_graph, neg_graph
-        else:
-            start_nodes = self.get_start_nodes(batch)
-            items, items_pos = pairs_from_dgl_graph(
-                self.graph,
-                start_nodes,
-                self.num_walks,
-                self.walk_length,
-                self.focus_start,
-            )
-            items_neg = self.sample_i2i_negatives(items, items_pos)
-            # nodes in pos_graph and neg_graph are same, difference is the connected edges
-            pos_graph, neg_graph, *target_nodes = build_subgraphs(
-                items, (items_pos, items_neg), self.paradigm, self.num_neg
-            )
-            # item -> item homogeneous graph, items on all nodes
-            all_items = pos_graph.ndata[self.dgl.NID]
-            item_data = self.neighbor_walker(all_items, target_nodes)
-            return item_data, pos_graph, neg_graph
-
-    def get_start_nodes(self, batch):
-        size = len(batch["item"])
-        if self.start_node == "unpopular":
-            start_nodes = torch.multinomial(self.pos_probs, size, replacement=True)
-        else:
-            start_nodes = torch.randint(0, self.n_items, (size,))
-        return start_nodes
-
-    def _set_dgl_seeds(self):
-        if self.dgl_seed is None:
-            worker_info = torch.utils.data.get_worker_info()
-            seed = self.seed if worker_info is None else worker_info.seed
-            seed = seed % 3407 * 11
-            self.dgl.seed(seed)
-            self.dgl_seed = True
 
 
 def repeat_feats(batch_feats, col_index, num_neg, is_pairwise=False):
@@ -483,7 +323,6 @@ def merge_columns(user_features, item_features, user_col_index, item_col_index):
             f"length of user_features and length of item_features don't match, "
             f"got {len(user_features)} and {len(item_features)}"
         )
-    # keep column names in original order
     orig_cols = user_col_index + item_col_index
     col_reindex = np.arange(len(orig_cols))[np.argsort(orig_cols)]
     concat_features = np.concatenate([user_features, item_features], axis=1)

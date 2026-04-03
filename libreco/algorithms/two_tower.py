@@ -5,8 +5,7 @@ from ..bases import DynEmbedBase, ModelMeta
 from ..feature.ssl import get_mutual_info
 from ..layers import dense_nn, normalize_embeds
 from ..tfops import dropout_config, reg_config, tf
-from ..torchops import hidden_units_config
-from ..utils.misc import count_params
+from ..utils.misc import count_params, hidden_units_config
 from ..utils.validate import dense_field_size, sparse_feat_size
 
 

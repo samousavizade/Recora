@@ -26,16 +26,6 @@ Base Classes
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.GensimBase
-   :members:
-   :inherited-members:
-   :show-inheritance:
-
-.. autoclass:: libreco.bases.SageBase
-   :members:
-   :inherited-members:
-   :show-inheritance:
-
 .. autoclass:: libreco.bases.DynEmbedBase
    :members:
    :inherited-members:

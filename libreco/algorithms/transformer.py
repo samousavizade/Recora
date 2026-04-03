@@ -19,8 +19,7 @@ from ..tfops.features import (
     compute_dense_feats,
     compute_sparse_feats,
 )
-from ..torchops import hidden_units_config
-from ..utils.misc import count_params
+from ..utils.misc import count_params, hidden_units_config
 from ..utils.validate import (
     check_dense_values,
     check_multi_sparse,

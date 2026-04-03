@@ -49,7 +49,7 @@ module to let users quickly train and deploy different kinds of recommendation m
 
 **The main features are:**
 
-+ Implements a number of popular recommendation algorithms such as FM, DIN, LightGCN etc. See `full algorithm list <https://github.com/massquantity/LibRecommender#references>`_.
++ Implements a number of popular recommendation algorithms such as FM, DIN, BPR etc. See `full algorithm list <https://github.com/massquantity/LibRecommender#references>`_.
 + A hybrid recommender system, which allows users to use either collaborative-filtering or content-based features. New features can be added on the fly.
 + Low memory usage, automatically convert categorical and multi-value categorical features to sparse representation.
 + Supports training for both explicit and implicit datasets, as well as negative sampling on implicit data.
@@ -64,7 +64,7 @@ Quick Start
 
 The two tabs below demonstrate the process of train, evaluate, predict, recommend and cold-start.
 
-1. **Pure** example(collaborative filtering), which uses ``LightGCN`` model.
+1. **Pure** example(collaborative filtering), which uses ``BPR`` model.
 
 2. **Feat** example(use features), which uses ``YouTubeRanking`` model.
 

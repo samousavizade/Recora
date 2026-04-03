@@ -12,8 +12,7 @@ from ..tfops.features import (
     compute_sparse_feats,
     get_sparse_feed_dict,
 )
-from ..torchops import hidden_units_config
-from ..utils.misc import count_params
+from ..utils.misc import count_params, hidden_units_config
 from ..utils.validate import (
     check_multi_sparse,
     check_seq_mode,

@@ -2,7 +2,7 @@
 from ..bases import ModelMeta, TfBase
 from ..layers import dense_nn, embedding_lookup, tf_dense
 from ..tfops import dropout_config, reg_config, tf
-from ..torchops import hidden_units_config
+from ..utils.misc import hidden_units_config
 
 
 class NCF(TfBase, metaclass=ModelMeta):
