@@ -9,7 +9,7 @@ These features are projected into low dimension vectors through an embedding lay
 which is by far the most common way of handling sparse features.
 
 Dense features are typically numerical features such as age, price, length, etc.
-Unfortunately, there is no common way of handling these features, so in LibRecommender
+Unfortunately, there is no common way of handling these features, so in Recora
 we mainly use the method described in the `AutoInt <https://arxiv.org/pdf/1810.11921.pdf>`_ paper.
 
 Specifically, every dense feature are also projected into low dimension vectors through
@@ -41,7 +41,7 @@ Often times categorical features can be multi-valued. For example, a movie may h
 
 
 Usually we can handle this kind of feature by using multi-hot encoding,
-so in LibRecommender they are called ``multi_sparse`` features. After some transformation,
+so in Recora they are called ``multi_sparse`` features. After some transformation,
 the data can become like this (just for illustration purpose):
 
 +---------+------------------------------------+------------+------------+---------+
@@ -69,7 +69,7 @@ Note it's a list of list, because there are possibly many multi_sparse features,
 
 When you specify a feature as ``multi_sparse`` feature like this, each sub-feature, i.e. ``genre1``, ``genre2``, ``genre3`` in the table above, will share the same embedding of the original feature ``genre``. Whether the embedding sharing would improve the model performance is data-dependent. But one thing is certain, it will reduce the total number of model parameters.
 
-LibRecommender provides multiple ways of dealing with ``multi_sparse`` features,
+Recora provides multiple ways of dealing with ``multi_sparse`` features,
 i.e. ``normal``, ``sum`` , ``mean`` and ``sqrtn``. ``normal`` means treating
 each sub-feature's embedding separately, and in most cases they will be concatenated at last.
 ``sum`` and ``mean`` means computing the sum or mean of each sub-feature's embedding,
@@ -106,13 +106,13 @@ e.g. 0 or -999.99.
 Also be aware that the ``pad_val`` parameter is a list and should have
 the same length as the number of ``multi_sparse`` features, and the reason for this is obvious.
 So all in all an example script is enough to illustrate the usage of ``multi_sparse`` features,
-see `multi_sparse_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/multi_sparse_example.py>`_.
+see `multi_sparse_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/multi_sparse_example.py>`_.
 
 
 
-LibRecommender also provides a convenient function (``split_multi_value``) to transform the original ``multi_sparse`` features to the divided sub-features illustrated above.
+Recora also provides a convenient function (``split_multi_value``) to transform the original ``multi_sparse`` features to the divided sub-features illustrated above.
 
 .. literalinclude:: ../../../examples/multi_sparse_processing_example.py
-   :caption: From file `examples/multi_sparse_processing_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/multi_sparse_processing_example.py>`_
+   :caption: From file `examples/multi_sparse_processing_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/multi_sparse_processing_example.py>`_
    :name: multi_sparse_processing_example.py
    :lines: 24-32

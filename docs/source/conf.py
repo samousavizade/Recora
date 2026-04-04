@@ -10,7 +10,7 @@ sys.path.insert(0, str(Path(__file__).parents[2].resolve()))
 # -- Project information -----------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#project-information
 
-project = "LibRecommender"
+project = "Recora"
 copyright = "2023, massquantity"
 author = "massquantity"
 
@@ -19,12 +19,12 @@ author = "massquantity"
 # built documents.
 #
 # The short X.Y version.
-import libreco
+import recora
 
-version = ".".join(libreco.__version__.split(".")[:2])
+version = ".".join(recora.__version__.split(".")[:2])
 
 # The full version, including alpha/beta/rc tags.
-release = libreco.__version__
+release = recora.__version__
 
 # -- General configuration ---------------------------------------------------
 # https://www.sphinx-doc.org/en/master/usage/configuration.html#general-configuration
@@ -79,7 +79,7 @@ html_theme_options = {"top_of_page_button": None}
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
 html_css_files = ["css/custom.css"]
-html_title = f"Lib&nbsp;<span id='release'>{release}</span> <span id='rec'>Recommender</span>"
+html_title = f"Recora&nbsp;<span id='release'>{release}</span>"
 
 # Custom sidebar templates, must be a dictionary that maps document names
 # to template names.

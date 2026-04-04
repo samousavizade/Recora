@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from libreco.bases import CfBase
+from recora.bases import CfBase
 from libserving.serialization import knn2redis, save_knn
 from tests.utils_data import SAVE_PATH
 

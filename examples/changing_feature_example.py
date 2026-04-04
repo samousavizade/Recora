@@ -1,10 +1,12 @@
+import path_setup  # noqa: F401
+
 import pandas as pd
 import tensorflow as tf
 
-from libreco.algorithms import DeepFM
-from libreco.data import DataInfo, DatasetFeat, split_by_ratio_chrono
-from libreco.evaluation import evaluate
-from libreco.prediction import predict_data_with_feats
+from recora.algorithms import DeepFM
+from recora.data import DataInfo, DatasetFeat, split_by_ratio_chrono
+from recora.evaluation import evaluate
+from recora.prediction import predict_data_with_feats
 
 
 if __name__ == "__main__":

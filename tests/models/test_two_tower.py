@@ -4,7 +4,7 @@ import pytest
 import tensorflow as tf
 from numpy.testing import assert_array_equal
 
-from libreco.algorithms import TwoTower
+from recora.algorithms import TwoTower
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import set_ranking_labels
 from tests.utils_metrics import get_metrics

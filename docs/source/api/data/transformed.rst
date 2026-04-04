@@ -1,10 +1,10 @@
 TransformedSet
 ==============
 
-.. autoclass:: libreco.data.TransformedSet
+.. autoclass:: recora.data.TransformedSet
    :members:
    :special-members: __len__
 
-.. autoclass:: libreco.data.TransformedEvalSet
+.. autoclass:: recora.data.TransformedEvalSet
    :members:
    :special-members: __len__

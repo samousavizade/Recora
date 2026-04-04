@@ -1,8 +1,8 @@
-package com.libreco.model
+package com.recora.model
 
 import org.apache.spark.sql.DataFrame
-import com.libreco.feature.FeatureEngineering
-import com.libreco.evaluate.EvalRegressor
+import com.recora.feature.FeatureEngineering
+import com.recora.evaluate.EvalRegressor
 import org.apache.spark.ml.regression.{GBTRegressor, GeneralizedLinearRegression}
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 

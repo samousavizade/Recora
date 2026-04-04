@@ -39,11 +39,11 @@ jobs:
 
       - name: Lint with flake8
         run: |
-          flake8 libreco/ libserving/ tests/ examples/
+          flake8 recora/ libserving/ tests/ examples/
 
       - name: Lint with ruff
         run: |
-          ruff check libreco/ libserving/ tests/ examples/
+          ruff check recora/ libserving/ tests/ examples/
         if: matrix.python-version != '3.6'
 
       - name: Test

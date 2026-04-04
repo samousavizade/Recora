@@ -1,7 +1,7 @@
 Caser
 -----
 
-.. autoclass:: libreco.algorithms.Caser
+.. autoclass:: recora.algorithms.Caser
    :members:
    :inherited-members:
    :show-inheritance:

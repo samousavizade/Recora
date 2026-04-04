@@ -1,5 +1,5 @@
 Evaluation
 ==========
 
-.. automodule:: libreco.evaluation
+.. automodule:: recora.evaluation
     :members:

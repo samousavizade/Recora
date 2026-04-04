@@ -3,11 +3,11 @@ from typing import Union
 
 import numpy as np
 
-from libreco.bases import DynEmbedBase, TfBase
-from libreco.data import DataInfo
-from libreco.tfops import tf
-from libreco.utils.constants import UserEmbedModels
-from libreco.utils.misc import colorize
+from recora.bases import DynEmbedBase, TfBase
+from recora.data import DataInfo
+from recora.tfops import tf
+from recora.utils.constants import UserEmbedModels
+from recora.utils.misc import colorize
 
 from .common import (
     check_model_exists,

@@ -1,4 +1,4 @@
-package com.libreco.feature
+package com.recora.feature
 
 import org.apache.spark.ml.feature._
 import org.apache.spark.ml.{Pipeline, PipelineStage}

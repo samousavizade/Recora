@@ -31,7 +31,7 @@ class YouTubeRanking(TfBase, metaclass=ModelMeta):
     ----------
     task : {'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     loss_type : {'cross_entropy', 'focal'}, default: 'cross_entropy'
         Loss for model training.

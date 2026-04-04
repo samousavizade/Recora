@@ -36,7 +36,7 @@ class TfBase(Base):
     ----------
     task : {'rating', 'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     lower_upper_bound : tuple or None
         Lower and upper score bound for `rating` task.
@@ -73,7 +73,7 @@ class TfBase(Base):
 
         Parameters
         ----------
-        train_data : :class:`~libreco.data.TransformedSet` object
+        train_data : :class:`~recora.data.TransformedSet` object
             Data object used for training.
         neg_sampling : bool
             Whether to perform negative sampling for training or evaluating data.
@@ -93,7 +93,7 @@ class TfBase(Base):
 
         shuffle : bool, default: True
             Whether to shuffle the training data.
-        eval_data : :class:`~libreco.data.TransformedSet` object, default: None
+        eval_data : :class:`~recora.data.TransformedSet` object, default: None
             Data object used for evaluating.
         metrics : list or None, default: None
             List of metrics for evaluating.
@@ -171,7 +171,7 @@ class TfBase(Base):
               representation of the cold-start user/item.
 
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
 
         Returns
@@ -228,7 +228,7 @@ class TfBase(Base):
               representation of the cold-start user/item.
 
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
         filter_consumed : bool, default: True
             Whether to filter out items that a user has previously consumed.
@@ -395,7 +395,7 @@ class TfBase(Base):
             File folder path to save model.
         model_name : str
             Name of the saved model file.
-        data_info : :class:`~libreco.data.DataInfo` object
+        data_info : :class:`~recora.data.DataInfo` object
             Object that contains some useful information.
         manual : bool, default: True
             Whether to load model variables using numpy. If you save the model using

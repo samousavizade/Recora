@@ -30,7 +30,7 @@ class CfBase(Base):
     ----------
     task : {'rating', 'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     cf_type : {'user_cf', 'item_cf'}
         Specific CF type.
@@ -56,8 +56,8 @@ class CfBase(Base):
 
     See Also
     --------
-    ~libreco.algorithms.UserCF
-    ~libreco.algorithms.ItemCF
+    ~recora.algorithms.UserCF
+    ~recora.algorithms.ItemCF
     """
 
     def __init__(
@@ -120,7 +120,7 @@ class CfBase(Base):
 
         Parameters
         ----------
-        train_data : :class:`~libreco.data.TransformedSet` object
+        train_data : :class:`~recora.data.TransformedSet` object
             Data object used for training.
         neg_sampling : bool
             Whether to perform negative sampling for evaluating data.
@@ -130,7 +130,7 @@ class CfBase(Base):
         verbose : int, default: 1
             Print verbosity. If `eval_data` is provided, setting it to higher than 1
             will print evaluation metrics during training.
-        eval_data : :class:`~libreco.data.TransformedSet` object, default: None
+        eval_data : :class:`~recora.data.TransformedSet` object, default: None
             Data object used for evaluating.
         metrics : list or None, default: None
             List of metrics for evaluating.
@@ -269,7 +269,7 @@ class CfBase(Base):
         cold_start : {'popular'}, default: 'popular'
             Cold start strategy, CF models can only use 'popular' strategy.
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
         filter_consumed : bool, default: True
             Whether to filter out items that a user has previously consumed.

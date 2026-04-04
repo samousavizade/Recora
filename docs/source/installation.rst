@@ -1,17 +1,17 @@
 Installation
 ============
 
-From `pypi <https://pypi.org/project/LibRecommender/>`_ :
+From `pypi <https://pypi.org/project/recora/>`_ :
 
 .. code-block:: bash
 
-    $ pip install -U LibRecommender
+    $ pip install -U recora
 
 Build from source:
 
 .. code-block:: bash
 
-    $ pip install git+https://github.com/massquantity/LibRecommender.git
+    $ pip install git+https://github.com/samousavizade/MyRec.git
 
 Or if you want to modify some source code, e.g. implementing a new algorithm by inheriting
 from base classes in the library,
@@ -21,8 +21,8 @@ without having to rebuild and reinstall (The ``-vv`` flag is used for outputting
 
 .. code-block:: bash
 
-    $ git clone https://github.com/massquantity/LibRecommender.git
-    $ cd LibRecommender
+    $ git clone https://github.com/samousavizade/MyRec.git
+    $ cd MyRec
     $ pip install -e . -vv
 
 -----------------------
@@ -32,26 +32,26 @@ Dependencies
 
 .. HINT::
 
-    LibRecommender contains two modules: `libreco <https://github.com/massquantity/LibRecommender/tree/master/libreco>`_
-    for ``training`` and  `libserving <https://github.com/massquantity/LibRecommender/tree/master/libserving>`_
+    Recora contains two modules: `recora <https://github.com/samousavizade/MyRec/tree/master/recora>`_
+    for ``training`` and  `libserving <https://github.com/samousavizade/MyRec/tree/master/libserving>`_
     for ``serving``. If one only wants to train a model, dependencies for `libserving` are not needed.
 
 .. Caution::
 
-    Since version ``1.0.0``, the following dependencies will **NOT** be installed along with LibRecommender to
+    Since version ``1.0.0``, the following dependencies will **NOT** be installed along with Recora to
     avoid messing up your local dependencies.
 
     Please make sure dependencies in your machine meet the version requirements.
-    Or one can manually run the `requirements file <https://github.com/massquantity/LibRecommender/blob/master/requirements.txt>`_:
+    Or one can manually run the `requirements file <https://github.com/samousavizade/MyRec/blob/master/requirements.txt>`_:
 
     .. code-block:: bash
 
         $ pip install -r requirements.txt
 
-    to install all the ``libreco`` dependencies.
+    to install all the ``recora`` dependencies.
 
 
-Dependencies for libreco:
+Dependencies for recora:
 ^^^^^^^^^^^^^^^^^^^^^^^^^
 
 + Python >= 3.6

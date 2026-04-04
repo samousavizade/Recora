@@ -2,7 +2,7 @@ import time
 
 import pytest
 
-from libreco.utils.misc import colorize, time_block, time_func
+from recora.utils.misc import colorize, time_block, time_func
 
 
 @time_func

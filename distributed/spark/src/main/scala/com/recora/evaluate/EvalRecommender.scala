@@ -1,4 +1,4 @@
-package com.libreco.evaluate
+package com.recora.evaluate
 
 import org.apache.spark.internal.Logging
 import org.apache.spark.sql.{DataFrame, Dataset}
@@ -7,8 +7,8 @@ import org.apache.spark.mllib.evaluation.RankingMetrics
 import org.apache.spark.sql.functions.{collect_list, expr, row_number}
 import org.apache.spark.sql.expressions.Window
 import org.apache.spark.rdd.RDD
-import com.libreco.data.DataSplitter
-import com.libreco.utils.Context
+import com.recora.data.DataSplitter
+import com.recora.utils.Context
 
 
 class EvalRecommender(num: Int = 10,

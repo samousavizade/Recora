@@ -10,7 +10,7 @@ import tensorflow as tf
 from requests.adapters import HTTPAdapter
 from urllib3.util import Retry
 
-from libreco.algorithms import (
+from recora.algorithms import (
     ALS,
     DIN,
     FM,
@@ -22,7 +22,7 @@ from libreco.algorithms import (
     WideDeep,
     YouTubeRetrieval,
 )
-from libreco.data import DatasetFeat
+from recora.data import DatasetFeat
 from tests.utils_data import SAVE_PATH, remove_path
 
 

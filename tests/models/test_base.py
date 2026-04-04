@@ -1,6 +1,6 @@
 import pytest
 
-from libreco.bases import Base
+from recora.bases import Base
 
 
 class NCF(Base):

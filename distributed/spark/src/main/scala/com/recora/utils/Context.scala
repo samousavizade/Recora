@@ -1,4 +1,4 @@
-package com.libreco.utils
+package com.recora.utils
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.SparkConf

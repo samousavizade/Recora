@@ -3,7 +3,7 @@ import itertools
 import numpy as np
 import pytest
 
-from libreco.utils.initializers import (
+from recora.utils.initializers import (
     he_init,
     truncated_normal,
     variance_scaling,

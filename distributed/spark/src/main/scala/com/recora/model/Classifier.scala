@@ -1,8 +1,8 @@
-package com.libreco.model
+package com.recora.model
 
 import org.apache.spark.sql.DataFrame
-import com.libreco.feature.FeatureEngineering
-import com.libreco.evaluate.EvalClassifier
+import com.recora.feature.FeatureEngineering
+import com.recora.evaluate.EvalClassifier
 import org.apache.spark.ml.classification.{MultilayerPerceptronClassifier, RandomForestClassifier}
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 import org.apache.spark.sql.functions.{udf, col}

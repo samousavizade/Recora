@@ -4,7 +4,7 @@ Model & Train
 Pure and Feat Models
 --------------------
 
-LibRecommender is a hybrid recommender system, which means you can choose whether to use
+Recora is a hybrid recommender system, which means you can choose whether to use
 features other than user behaviors or not. For models only use user behaviors, we classify
 them as ``pure`` models. This category includes ``UserCF``, ``ItemCF``, ``SVD``, ``SVD++``,
 ``ALS``, ``NCF``, ``BPR``, ``RNN4Rec``, ``Caser``, ``WaveNet``.
@@ -15,22 +15,22 @@ them ``feat`` models. This category includes ``WideDeep``, ``FM``, ``DeepFM``, `
 
 The main difference on usage between these two kinds of models are:
 
-1.  ``pure`` models should use :class:`~libreco.data.dataset.DatasetPure` to process data,
-and ``feat`` models should use :class:`~libreco.data.dataset.DatasetFeat`.
+1.  ``pure`` models should use :class:`~recora.data.dataset.DatasetPure` to process data,
+and ``feat`` models should use :class:`~recora.data.dataset.DatasetFeat`.
 
 2. When using ``feat`` models, four parameters should be provided,
 i.e. [``sparse_col``, ``dense_col``, ``user_col``, ``item_col``], as otherwise the model will
 have no idea how to deal with all kinds of features.
 
-The ``fit()`` method is the sole method for training a model in LibRecommender.
+The ``fit()`` method is the sole method for training a model in Recora.
 You can find some typical usages in these examples:
 
 .. SeeAlso::
 
-    + `pure_rating_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/pure_rating_example.py>`_
-    + `pure_ranking_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/pure_ranking_example.py>`_
-    + `feat_rating_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/feat_rating_example.py>`_
-    + `feat_ranking_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/feat_ranking_example.py>`_
+    + `pure_rating_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/pure_rating_example.py>`_
+    + `pure_ranking_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/pure_ranking_example.py>`_
+    + `feat_rating_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/feat_rating_example.py>`_
+    + `feat_ranking_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/feat_ranking_example.py>`_
 
 In addition, some models can leverage user behavior sequence. These sequence-oriented models
 overlap with both ``pure`` and ``feat`` categories, while keeping the same training APIs.
@@ -39,7 +39,7 @@ Multiprocess data loading
 -------------------------
 
 Most TensorFlow models can enable multiprocess batch loading during training by setting
-the ``num_workers`` parameter in ``fit()``. This uses LibRecommender's internal batch loader
+the ``num_workers`` parameter in ``fit()``. This uses Recora's internal batch loader
 to prepare NumPy batches in worker processes before feeding them into TensorFlow.
 
 .. code-block:: python3
@@ -49,11 +49,11 @@ to prepare NumPy batches in worker processes before feeding them into TensorFlow
 Loss
 ----
 
-LibRecommender provides some options on loss type for *ranking* :ref:`task <Task>`.
+Recora provides some options on loss type for *ranking* :ref:`task <Task>`.
 The default loss type for most models is *cross entropy* loss. Since version ``0.10.0``,
 focal loss was added into the library. First introduced in `Lin et al., 2018 <https://arxiv.org/pdf/1708.02002.pdf>`_,
 focal loss down-weights well-classified examples and focuses on hard examples to get better
-training performance, and here is the `implementation <https://github.com/massquantity/LibRecommender/blob/master/libreco/tfops/loss.py#L34>`_.
+training performance, and here is the `implementation <https://github.com/samousavizade/MyRec/blob/master/recora/tfops/loss.py#L34>`_.
 
 In order to choose which loss to use, simply set the ``loss_type`` parameter:
 

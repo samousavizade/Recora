@@ -119,7 +119,7 @@ class DynEmbedBase(EmbedBase):
               representation of the cold-start user/item.
 
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
         filter_consumed : bool, default: True
             Whether to filter out items that a user has previously consumed.
@@ -189,7 +189,7 @@ class DynEmbedBase(EmbedBase):
             Whether to include bias term in returned embeddings.
             Note some models such as `SVD`, `BPR` etc., use bias term in model inference.
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
 
         Returns

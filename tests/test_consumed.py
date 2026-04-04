@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from libreco.data.consumed import _fill_empty, _merge_dedup, interaction_consumed
+from recora.data.consumed import _fill_empty, _merge_dedup, interaction_consumed
 
 
 @pytest.mark.skipif(

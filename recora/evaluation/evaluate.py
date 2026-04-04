@@ -75,7 +75,7 @@ def evaluate(
     ----------
     model : Base
         Model for evaluation.
-    data : :class:`pandas.DataFrame` or :class:`~libreco.data.TransformedEvalSet`
+    data : :class:`pandas.DataFrame` or :class:`~recora.data.TransformedEvalSet`
         Data to evaluate.
     neg_sampling : bool
         Whether to perform negative sampling for evaluating data.

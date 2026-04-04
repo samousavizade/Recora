@@ -1,7 +1,7 @@
 SVD
 ---
 
-.. autoclass:: libreco.algorithms.SVD
+.. autoclass:: recora.algorithms.SVD
    :members:
    :inherited-members:
    :show-inheritance:

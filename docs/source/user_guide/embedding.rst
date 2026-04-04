@@ -1,9 +1,9 @@
 Embedding
 =========
 
-According to the `algorithm list <https://github.com/massquantity/LibRecommender#references>`_,
+According to the `algorithm list <https://github.com/samousavizade/MyRec#references>`_,
 there are some algorithms that can generate user and item embeddings after training.
-So LibRecommender provides public APIs to get them:
+So Recora provides public APIs to get them:
 
 .. code-block:: python3
 
@@ -26,7 +26,7 @@ So one can fall back to numpy similarity calculation if nmslib is not available.
    >>> model.search_knn_users(user=1, k=3)
    >>> model.search_knn_items(item=2, k=3)
 
-Before searching, one should call :func:`~libreco.bases.EmbedBase.init_knn` to initialize the index.
+Before searching, one should call :func:`~recora.bases.EmbedBase.init_knn` to initialize the index.
 Set ``approximate=True`` if you can use nmslib, otherwise set ``approximate=False``.
 The ``sim_type`` parameter should either be ``cosine`` or ``inner-product``.
 
@@ -36,7 +36,7 @@ Dynamic Embedding Generation
 It is also common to generate user embeddings based on features or behavior sequences.
 Once the user embedding has been generated, you can use it to perform similarity search with all the item embeddings.
 
-This can be useful in the cold-start scenario, so LibRecommender provides API for dynamic user embeddings:
+This can be useful in the cold-start scenario, so Recora provides API for dynamic user embeddings:
 
 .. code-block:: python3
 
@@ -50,5 +50,5 @@ This can be useful in the cold-start scenario, so LibRecommender provides API fo
 
 .. SeeAlso::
 
-   `knn_embedding_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/knn_embedding_example.py>`_
+   `knn_embedding_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/knn_embedding_example.py>`_
 

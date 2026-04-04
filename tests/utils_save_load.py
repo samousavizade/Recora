@@ -1,7 +1,7 @@
 import tensorflow as tf
 
-from libreco.bases import TfBase
-from libreco.data import DataInfo
+from recora.bases import TfBase
+from recora.data import DataInfo
 from tests.utils_data import SAVE_PATH
 
 

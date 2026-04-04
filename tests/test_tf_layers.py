@@ -4,7 +4,7 @@ import numpy as np
 import pytest
 from numpy.testing import assert_allclose, assert_array_equal
 
-from libreco.layers import (
+from recora.layers import (
     conv_nn,
     dense_nn,
     layer_normalization,
@@ -15,13 +15,13 @@ from libreco.layers import (
     tf_dense,
     tf_rnn,
 )
-from libreco.layers.activation import gelu, swish
-from libreco.layers.transformer import (
+from recora.layers.activation import gelu, swish
+from recora.layers.transformer import (
     positional_encoding,
     transformer_decoder_layer,
     transformer_encoder_layer,
 )
-from libreco.tfops import dropout_config, reg_config, tf
+from recora.tfops import dropout_config, reg_config, tf
 
 
 @pytest.fixture

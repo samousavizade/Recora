@@ -67,24 +67,24 @@ else:
 
 extensions = [
     Extension(
-        "libreco.algorithms._bpr",
-        [os.path.join("libreco", "algorithms", "_bpr.pyx")],
+        "recora.algorithms._bpr",
+        [os.path.join("recora", "algorithms", "_bpr.pyx")],
         include_dirs=[np.get_include()],
         language="c++",
         extra_compile_args=compile_args,
         extra_link_args=link_args,
     ),
     Extension(
-        "libreco.algorithms._als",
-        [os.path.join("libreco", "algorithms", "_als.pyx")],
+        "recora.algorithms._als",
+        [os.path.join("recora", "algorithms", "_als.pyx")],
         include_dirs=[np.get_include()],
         language="c++",
         extra_compile_args=compile_args,
         extra_link_args=link_args,
     ),
     Extension(
-        "libreco.utils._similarities",
-        [os.path.join("libreco", "utils", "_similarities.pyx")],
+        "recora.utils._similarities",
+        [os.path.join("recora", "utils", "_similarities.pyx")],
         include_dirs=[np.get_include()],
         language="c++",
         extra_compile_args=compile_args,
@@ -111,7 +111,7 @@ setup(
     keywords=metadata["keywords"],
     packages=find_packages(
         where=".",
-        include=["libreco*", "libserving*"],
+        include=["recora*", "libserving*"],
         exclude=["test*", "examples"],
     ),
     include_package_data=True,

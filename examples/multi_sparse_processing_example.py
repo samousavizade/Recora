@@ -1,7 +1,14 @@
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import pandas as pd
 
-from libreco.algorithms import DeepFM
-from libreco.data import DatasetFeat, split_by_ratio_chrono, split_multi_value
+from recora.algorithms import DeepFM
+from recora.data import DatasetFeat, split_by_ratio_chrono, split_multi_value
 
 pd.set_option("display.max_columns", 20)
 

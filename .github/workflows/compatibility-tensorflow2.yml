@@ -31,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'protobuf<=3.20.2'
           python -m pip install $(sed "/tensorflow*/d;/nmslib*/d;/dataclasses*/d" requirements.txt | tr -d ' ')
-          python -m pip install LibRecommender
+          python -m pip install recora
           python -m pip install tensorflow==${{ matrix.tensorflow-version }}
           python -m pip install numpy==${{ matrix.numpy-version }}
 
@@ -44,8 +44,8 @@ jobs:
 
       - name: Test wheels compatibility on Windows
         run: |
-          copy D:\a\LibRecommender\LibRecommender\tests\sample_data\sample_movielens_rating.dat D:\a\
-          copy D:\a\LibRecommender\LibRecommender\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
+          copy D:\a\MyRec\MyRec\tests\sample_data\sample_movielens_rating.dat D:\a\
+          copy D:\a\MyRec\MyRec\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
           python -m compatibility_test
         if: matrix.os == 'windows-latest'
 
@@ -82,7 +82,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'protobuf<=3.20.2'
           python -m pip install $(sed "/tensorflow*/d;/nmslib*/d;/dataclasses*/d" requirements.txt | tr -d ' ')
-          python -m pip install LibRecommender
+          python -m pip install recora
           python -m pip install tensorflow==${{ matrix.tensorflow-version }}
           python -m pip install numpy==${{ matrix.numpy-version }}
 
@@ -95,8 +95,8 @@ jobs:
 
       - name: Test wheels compatibility on Windows
         run: |
-          copy D:\a\LibRecommender\LibRecommender\tests\sample_data\sample_movielens_rating.dat D:\a\
-          copy D:\a\LibRecommender\LibRecommender\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
+          copy D:\a\MyRec\MyRec\tests\sample_data\sample_movielens_rating.dat D:\a\
+          copy D:\a\MyRec\MyRec\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
           python -m compatibility_test
         if: matrix.os == 'windows-latest'
 
@@ -159,7 +159,7 @@ jobs:
           python -m pip install --upgrade pip wheel setuptools
           python -m pip install 'protobuf<=3.20.2'
           python -m pip install $(sed "/tensorflow*/d;/nmslib*/d;/dataclasses*/d" requirements.txt | tr -d ' ')
-          python -m pip install LibRecommender
+          python -m pip install recora
           python -m pip install tensorflow==${{ matrix.tensorflow-version }}
           python -m pip install numpy==${{ matrix.numpy-version }}
 
@@ -172,8 +172,8 @@ jobs:
 
       - name: Test wheels compatibility on Windows
         run: |
-          copy D:\a\LibRecommender\LibRecommender\tests\sample_data\sample_movielens_rating.dat D:\a\
-          copy D:\a\LibRecommender\LibRecommender\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
+          copy D:\a\MyRec\MyRec\tests\sample_data\sample_movielens_rating.dat D:\a\
+          copy D:\a\MyRec\MyRec\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
           python -m compatibility_test
         if: matrix.os == 'windows-latest'
 

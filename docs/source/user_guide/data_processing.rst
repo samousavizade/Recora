@@ -17,7 +17,7 @@ If you only have one dataset, there are several ways to split it:
 
 .. SeeAlso::
 
-    `split_data_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/split_data_example.py>`_
+    `split_data_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/split_data_example.py>`_
 
 .. CAUTION::
     **Some caveats about the data:**
@@ -31,7 +31,7 @@ If you only have one dataset, there are several ways to split it:
 Task
 ----
 
-In general, there are two kinds of tasks in LibRecommender: ``rating`` and ``ranking`` task. The ``rating`` task deals with explicit data such as ``MovieLens`` or ``Netflix`` dataset, whereas the ``ranking`` task deals with implicit data such as `Last.FM <https://grouplens.org/datasets/hetrec-2011/>`_ dataset. The main difference on usage between these two tasks are:
+In general, there are two kinds of tasks in Recora: ``rating`` and ``ranking`` task. The ``rating`` task deals with explicit data such as ``MovieLens`` or ``Netflix`` dataset, whereas the ``ranking`` task deals with implicit data such as `Last.FM <https://grouplens.org/datasets/hetrec-2011/>`_ dataset. The main difference on usage between these two tasks are:
 
 1. The ``task`` parameter must be specified when building a model.
 2. Obviously the metrics used for evaluating should be different. For ``rating`` task, the available metrics are [``rmse``, ``mae``, ``r2``] , and for ``ranking`` task the available metrics are [``loss``, ``balanced_accuracy``, ``roc_auc``, ``pr_auc``, ``precision``, ``recall``, ``map``, ``ndcg``] .

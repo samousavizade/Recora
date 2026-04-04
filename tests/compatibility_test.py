@@ -3,16 +3,16 @@ from pathlib import Path
 import pandas as pd
 import tensorflow as tf
 
-import libreco
-from libreco.algorithms import Caser, RNN4Rec
-from libreco.data import DatasetPure, split_by_ratio_chrono
-from libreco.tfops import TF_VERSION
+import recora
+from recora.algorithms import Caser, RNN4Rec
+from recora.data import DatasetPure, split_by_ratio_chrono
+from recora.tfops import TF_VERSION
 
 if __name__ == "__main__":
     print(f"tensorflow version: {TF_VERSION}")
-    print(libreco)
-    from libreco.algorithms._als import als_update
-    from libreco.utils._similarities import forward_cosine, invert_cosine
+    print(recora)
+    from recora.algorithms._als import als_update
+    from recora.utils._similarities import forward_cosine, invert_cosine
 
     print("Cython functions: ", invert_cosine, forward_cosine, als_update)
 

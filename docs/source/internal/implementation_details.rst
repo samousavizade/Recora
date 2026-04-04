@@ -2,11 +2,11 @@ Implementation Details
 ======================
 
 In this section we describe some implementation details for
-`algorithms <https://github.com/massquantity/LibRecommender#references>`_ in LibRecommender.
+`algorithms <https://github.com/samousavizade/MyRec#references>`_ in Recora.
 In general, we try to follow the same settings used in the reference papers when implementing
 these algorithms. But in some cases we find it useful to change or extend these settings
 for better performance or speed, or it is necessary to adjust them in order to fit in with
-the whole process in LibRecommender. As we will explain in detail below.
+the whole process in Recora. As we will explain in detail below.
 
 
 UserCF / ItemCF
@@ -16,7 +16,7 @@ The traditional implementation of UserCF / ItemCF is pre-allocating a user-user 
 similarity matrix, then computing similarities between all users/items and fill in the matrix.
 However, this can be problematic for big data, because allocating a full user-user or item-item
 matrix may use a lot of memory. For example, for only about 100 thousand items, a (100,000, 100,000)
-matrix of numpy float64 will consume approximately 70 GB memory. So in LibRecommender we mainly
+matrix of numpy float64 will consume approximately 70 GB memory. So in Recora we mainly
 use `scipy sparse matrices <https://docs.scipy.org/doc/scipy/reference/sparse.html>`_ to store similarity matrix and save memory.
 
 Furthermore, computing all the user-user or item-item similarities requires iterating all
@@ -24,7 +24,7 @@ data in for loops, which can be extremely slow in pure Python, so we use Cython 
 to bypass the `Python GIL <https://wiki.python.org/moin/GlobalInterpreterLock>`_.
 Also for the same purpose, we apply the `inverted index <https://en.wikipedia.org/wiki/Inverted_index>`_
 technic when computing similarities for better speed. The implementation is in
-`_similarities.pyx <https://github.com/massquantity/LibRecommender/blob/master/libreco/utils/_similarities.pyx>`_,
+`_similarities.pyx <https://github.com/samousavizade/MyRec/blob/master/recora/utils/_similarities.pyx>`_,
 and users can choose whether to use forward index or inverted index by setting the ``mode`` parameter:
 
 .. code-block:: bash
@@ -71,7 +71,7 @@ which samples candidates based on log-uniform distribution. This basically means
 popularity will be more likely sampled. This is actually not very surprising because sampled-softmax
 and nce are originally came from NLP area, and in NLP this setting is common. However,
 this may not be suitable in recommender system scenario, especially in large-scale retrieval problem.
-So in LibRecommender you can set the ``sampler`` parameter to ``uniform`` to make the model use
+So in Recora you can set the ``sampler`` parameter to ``uniform`` to make the model use
 `tf.random.uniform_candidate_sampler <https://www.tensorflow.org/api_docs/python/tf/random/uniform_candidate_sampler>`_,
 which samples items from uniform distribution. The default value in ``sampler`` is indeed ``uniform``,
 and if you change it to other value, the default log-uniform in TensorFlow will be used.
@@ -79,10 +79,10 @@ and if you change it to other value, the default log-uniform in TensorFlow will 
 Another caveat worth mentioning is the ``num_sampled`` parameter in `tf.nn.sampled_softmax_loss <https://www.tensorflow.org/api_docs/python/tf/nn/sampled_softmax_loss>`_ and
 `tf.nn.nce_loss <https://www.tensorflow.org/api_docs/python/tf/nn/nce_loss>`_.
 The doc states that this parameter means "The number of classes to randomly sample **per batch**".
-Well, this is counter-intuitive, because in LibRecommender the ``num_neg`` parameter means
+Well, this is counter-intuitive, because in Recora the ``num_neg`` parameter means
 "number of negative samples per positive sample". If you set ``num_sampled`` to 1, the model will
 sample only 1 negative sample for a batch data. So the parameter controls this setting in
-LibRecommender is ``num_sampled_per_batch``, and the default value is ``batch_size``,
+Recora is ``num_sampled_per_batch``, and the default value is ``batch_size``,
 which means every positive sample in a batch will get 1 negative sample.
 But of course you can change to the value you want.
 
@@ -111,7 +111,7 @@ WaveNet
 -------
 
 At first glance it looks weird to have `WaveNet <https://arxiv.org/pdf/1609.03499.pdf>`_
-in LibRecommender, since it's a model used for generating raw audio. But if you look at
+in Recora, since it's a model used for generating raw audio. But if you look at
 the paper closely,  the way they model audio waveforms using CNN can also be applied to
 user behavior sequence. So we can generate user embedding based on this technique.
 
@@ -120,7 +120,7 @@ TwoTower
 --------
 
 TwoTower is a widely employed algorithm family designed for addressing large-scale retrieval problems.
-In LibRecommender, we provide support for three different types of losses: ``cross_entropy``, ``max_margin`` and ``softmax``.
+In Recora, we provide support for three different types of losses: ``cross_entropy``, ``max_margin`` and ``softmax``.
 These losses correspond to pointwise loss, pairwise loss and listwise loss, respectively.
 The ``softmax`` loss corresponds to *in-batch softmax* training method described in the paper
 `Sampling-Bias-Corrected Neural Modeling for Large Corpus Item Recommendations <https://storage.googleapis.com/pub-tools-public-publication-data/pdf/6c8a86c981a62b0126a11896b7f6ae0dae4c3566.pdf>`_.

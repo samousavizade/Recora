@@ -1,7 +1,7 @@
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import Transformer
+from recora.algorithms import Transformer
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_metrics import get_metrics
 from tests.utils_multi_sparse_models import fit_multi_sparse

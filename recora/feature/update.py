@@ -80,7 +80,7 @@ def update_unique_feats(
     ----------
     data : pandas.DataFrame
         The original data.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     unique_ids : numpy.ndarray
         All the unique users or items.

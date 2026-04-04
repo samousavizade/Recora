@@ -2,29 +2,29 @@ Tutorial
 ========
 
 .. image:: https://colab.research.google.com/assets/colab-badge.svg
-   :target: https://colab.research.google.com/github/massquantity/LibRecommender/blob/master/examples/tutorial.ipynb
+   :target: https://colab.research.google.com/github/samousavizade/MyRec/blob/master/examples/tutorial.ipynb
    :alt: Open in Colab
 
 .. image:: https://img.shields.io/badge/View-on%20GitHub-blue?logo=GitHub
-   :target: https://github.com/massquantity/LibRecommender/blob/master/examples/tutorial.ipynb
+   :target: https://github.com/samousavizade/MyRec/blob/master/examples/tutorial.ipynb
    :alt: View On GitHub
 
 This tutorial will walk you through the comprehensive process of
-training a model in LibRecommender, i.e. **data processing -> feature
+training a model in Recora, i.e. **data processing -> feature
 engineering -> training -> evaluate -> save/load -> retrain**. We will
 use `Wide & Deep <https://arxiv.org/pdf/1606.07792.pdf>`__ as the
 example algorithm.
 
-First make sure the latest LibRecommender has been installed:
+First make sure the latest Recora has been installed:
 
 .. code-block:: bash
 
-    $ pip install -U LibRecommender
+    $ pip install -U recora
 
 .. admonition:: Serving
     :class: Note
 
-    For how to deploy a trained model in LibRecommender, see :ref:`Serving Guide <Serving Guide>`.
+    For how to deploy a trained model in Recora, see :ref:`Serving Guide <Serving Guide>`.
 
 .. admonition:: TensorFlow1 issue
     :class: Error
@@ -284,7 +284,7 @@ the data does not exist locally, it will be downloaded at first.
 
 Now we have about 1 million data. In order to perform evaluation after training, we need to split the data
 into train, eval and test data first. In this tutorial we will simply
-use :meth:`~libreco.data.random_split`. For other ways of splitting data, see :doc:`user_guide/data_processing`.
+use :meth:`~recora.data.random_split`. For other ways of splitting data, see :doc:`user_guide/data_processing`.
 
 .. _two parts:
 
@@ -298,7 +298,7 @@ Process Data & Features
 
 .. code:: python3
 
-    >>> from libreco.data import random_split
+    >>> from recora.data import random_split
     
     # split data into three folds for training, evaluating and testing
     >>> first_half_data = data[: (len(data) // 2)]
@@ -313,7 +313,7 @@ Process Data & Features
     first half data shape: (500104, 10)
 
 The data contains some categorical features such as “sex” and “genre”,
-as well as a numerical feature “age”. In LibRecommender we use
+as well as a numerical feature “age”. In Recora we use
 ``sparse_col`` to represent categorical features and ``dense_col`` to
 represent numerical features. So one should specify the column
 information and then use ``DatasetFeat.build_*`` functions to process
@@ -321,7 +321,7 @@ the data.
 
 .. code:: python3
 
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.data import DatasetFeat
     
     >>> sparse_col = ["sex", "occupation", "genre1", "genre2", "genre3"]
     >>> dense_col = ["age"]
@@ -356,14 +356,14 @@ Since as its name suggests, the ``Wide & Deep`` algorithm has wide and
 deep parts, and they use different optimizers. So we should specify the
 learning rate separately by using a dict:
 ``{"wide": 0.01, "deep": 3e-4}``. For other model hyper-parameters, see API reference of
-:class:`~libreco.algorithms.WideDeep`.
+:class:`~recora.algorithms.WideDeep`.
 
 In this example we treat all the samples in data as positive samples,
 and perform negative sampling. This is a standard procedure for "implicit data".
 
 .. code:: python3
 
-    from libreco.algorithms import WideDeep
+    from recora.algorithms import WideDeep
 
 .. code:: python3
 
@@ -412,7 +412,7 @@ test data.
 
 .. code:: python3
 
-    >>> from libreco.evaluation import evaluate
+    >>> from recora.evaluation import evaluate
     >>> evaluate(
     >>>     model=model,
     >>>     data=test_data,
@@ -495,7 +495,7 @@ Then we can load the model and make recommendation again.
 
 .. code:: python3
 
-    >>> from libreco.data import DataInfo
+    >>> from recora.data import DataInfo
     
     >>> loaded_data_info = DataInfo.load("model_path", model_name="wide_deep")
     >>> loaded_model = WideDeep.load("model_path", model_name="wide_deep", data_info=loaded_data_info)
@@ -526,8 +526,8 @@ the model from scratch every time we get some new data.
 
 
 The data processing is similar, except that we should use
-:meth:`~libreco.data.dataset.DatasetFeat.merge_trainset` and :meth:`~libreco.data.dataset.DatasetFeat.merge_evalset`
-in :class:`~libreco.data.dataset.DatasetFeat`.
+:meth:`~recora.data.dataset.DatasetFeat.merge_trainset` and :meth:`~recora.data.dataset.DatasetFeat.merge_evalset`
+in :class:`~recora.data.dataset.DatasetFeat`.
 
 The purpose of these functions is combining information from old data
 with that from new data, especially for the possible new users/items
@@ -539,7 +539,7 @@ from new data. For more details, see :doc:`user_guide/model_retrain`.
     >>> train_data, new_data_info = DatasetFeat.merge_trainset(train_data, loaded_data_info, merge_behavior=True)
     >>> eval_data = DatasetFeat.merge_evalset(eval_data, new_data_info)  # use new_data_info
 
-Then we construct a new model, and call :meth:`~libreco.algorithms.WideDeep.rebuild_model`
+Then we construct a new model, and call :meth:`~recora.algorithms.WideDeep.rebuild_model`
 method to assign the old trained variables into the new model.
 
 .. code:: python3
@@ -617,7 +617,7 @@ Finally, the training and recommendation parts are the same as before.
 .. admonition:: Where to go from here
     :class: Note
 
-    For more examples, see the `examples/ <https://github.com/massquantity/LibRecommender/tree/master/examples>`__ folder on GitHub.
+    For more examples, see the `examples/ <https://github.com/samousavizade/MyRec/tree/master/examples>`__ folder on GitHub.
 
     For more usages, please head to :doc:`user_guide/index`.
 

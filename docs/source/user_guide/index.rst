@@ -3,8 +3,8 @@
 User Guide
 ==========
 
-The purpose of this guide is to illustrate some main features that LibRecommender provides.
-Example usages are all listed in `examples <https://github.com/massquantity/LibRecommender/tree/master/examples>`_ folder.
+The purpose of this guide is to illustrate some main features that Recora provides.
+Example usages are all listed in `examples <https://github.com/samousavizade/MyRec/tree/master/examples>`_ folder.
 
 .. toctree::
    :maxdepth: 1

@@ -1,4 +1,4 @@
-package com.libreco.feature
+package com.recora.feature
 
 import org.apache.log4j.{Level, Logger}
 import org.apache.spark.ml.{Pipeline, Transformer}

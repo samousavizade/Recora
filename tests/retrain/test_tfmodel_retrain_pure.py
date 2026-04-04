@@ -3,9 +3,9 @@ from pathlib import Path
 import pandas as pd
 import tensorflow as tf
 
-from libreco.algorithms import WaveNet
-from libreco.data import DataInfo, DatasetPure, split_by_ratio_chrono
-from libreco.evaluation import evaluate
+from recora.algorithms import WaveNet
+from recora.data import DataInfo, DatasetPure, split_by_ratio_chrono
+from recora.evaluation import evaluate
 from tests.utils_data import SAVE_PATH, remove_path
 from tests.utils_pred import ptest_preds
 from tests.utils_reco import ptest_recommends

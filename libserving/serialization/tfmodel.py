@@ -1,8 +1,8 @@
 import os
 
-from libreco.bases import TfBase
-from libreco.tfops import tf
-from libreco.utils.misc import colorize
+from recora.bases import TfBase
+from recora.tfops import tf
+from recora.utils.misc import colorize
 
 from .common import (
     check_model_exists,

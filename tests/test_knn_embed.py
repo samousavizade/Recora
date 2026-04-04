@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from libreco.algorithms import ALS, BPR, RNN4Rec
+from recora.algorithms import ALS, BPR, RNN4Rec
 from tests.utils_data import set_ranking_labels
 
 

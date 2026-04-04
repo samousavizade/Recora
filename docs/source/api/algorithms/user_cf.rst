@@ -1,7 +1,7 @@
 UserCF
 ------
 
-.. autoclass:: libreco.algorithms.UserCF
+.. autoclass:: recora.algorithms.UserCF
    :members:
    :inherited-members:
    :show-inheritance:

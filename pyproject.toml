@@ -10,9 +10,9 @@ requires = [
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "LibRecommender"
+name = "recora"
 version = "1.5.2"
-description = "Versatile end-to-end recommender system."
+description = "Recora: versatile end-to-end recommender system (training via recora, serving via libserving)."
 authors = [
     { name = "massquantity", email = "jinxin_madie@163.com" },
 ]
@@ -40,15 +40,15 @@ dependencies = [
 ]
 
 [project.urls]
-documentation = "https://librecommender.readthedocs.io/en/latest/"
-repository = "https://github.com/massquantity/LibRecommender"
+documentation = "https://recora.readthedocs.io/en/latest/"
+repository = "https://github.com/samousavizade/MyRec"
 
 [tool.setuptools]
 include-package-data = true
 
 [tool.setuptools.packages.find]
 where = ["."]
-include = ["libreco*", "libserving*"]
+include = ["recora*", "libserving*"]
 namespaces = false
 
 [tool.black]
@@ -61,7 +61,7 @@ default_section = "THIRDPARTY"
 extend_skip_glob = ["*.pyx"]
 force_grid_wrap = 0
 include_trailing_comma = true
-known_first_party = ["libreco", "libserving"]
+known_first_party = ["recora", "libserving"]
 known_third_party = "pytest"
 line_length = 88
 multi_line_output = 3

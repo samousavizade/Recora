@@ -2,7 +2,7 @@ import subprocess
 
 import pytest
 
-from libreco.bases import TfBase
+from recora.bases import TfBase
 from libserving.serialization import save_tf, tf2redis
 from tests.utils_data import SAVE_PATH
 

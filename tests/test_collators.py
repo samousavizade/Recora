@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from libreco.algorithms import DIN, RNN4Rec, TwoTower
-from libreco.batch.batch_data import BatchData
-from libreco.batch.batch_unit import (
+from recora.algorithms import DIN, RNN4Rec, TwoTower
+from recora.batch.batch_data import BatchData
+from recora.batch.batch_unit import (
     PairFeats,
     PairwiseBatch,
     PointwiseBatch,
@@ -14,11 +14,11 @@ from libreco.batch.batch_unit import (
     SparseBatch,
     TripleFeats,
 )
-from libreco.batch.collators import BaseCollator as NormalCollator
-from libreco.batch.collators import PairwiseCollator, PointwiseCollator, SparseCollator
-from libreco.data import DatasetFeat
-from libreco.sampling.negatives import negatives_from_unconsumed
-from libreco.tfops import tf
+from recora.batch.collators import BaseCollator as NormalCollator
+from recora.batch.collators import PairwiseCollator, PointwiseCollator, SparseCollator
+from recora.data import DatasetFeat
+from recora.sampling.negatives import negatives_from_unconsumed
+from recora.tfops import tf
 
 raw_data = """
 user,item,label,time,sex,age,occupation,genre1,genre2,genre3

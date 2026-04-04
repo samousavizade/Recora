@@ -3,7 +3,7 @@ import sys
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import BPR
+from recora.algorithms import BPR
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import remove_path
 from tests.utils_metrics import get_metrics
@@ -116,6 +116,6 @@ def test_bpr(
 
 # def test_failed_import(monkeypatch):
 #    with monkeypatch.context() as m:
-#        m.delitem(sys.modules, "libreco.algorithms.bpr")
-#        m.setitem(sys.modules, "libreco.algorithms._bpr", None)
-#        from libreco.algorithms.bpr import BPR
+#        m.delitem(sys.modules, "recora.algorithms.bpr")
+#        m.setitem(sys.modules, "recora.algorithms._bpr", None)
+#        from recora.algorithms.bpr import BPR

@@ -1,9 +1,11 @@
+import path_setup  # noqa: F401
+
 import time
 
 import pandas as pd
 import tensorflow as tf
 
-from libreco.algorithms import (
+from recora.algorithms import (
     DIN,
     FM,
     AutoInt,
@@ -13,7 +15,7 @@ from libreco.algorithms import (
     YouTubeRanking,
     YouTubeRetrieval,
 )
-from libreco.data import DatasetFeat, split_by_ratio_chrono
+from recora.data import DatasetFeat, split_by_ratio_chrono
 
 
 def reset_state(name):

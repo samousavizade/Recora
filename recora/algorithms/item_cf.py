@@ -14,7 +14,7 @@ class ItemCF(CfBase):
     ----------
     task : {'rating', 'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     sim_type : {'cosine', 'pearson', 'jaccard'}, default: 'cosine'
         Types for computing similarities.
@@ -79,7 +79,7 @@ class ItemCF(CfBase):
         cold_start : {'popular'}, default: 'popular'
             Cold start strategy, ItemCF can only use 'popular' strategy.
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
 
         Returns

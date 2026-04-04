@@ -1,9 +1,9 @@
-package com.libreco.example
+package com.recora.example
 
 import org.apache.spark.sql.functions.{round, sum, lit}
-import com.libreco.utils.{Context, ItemNameConverter}
-import com.libreco.data.DataSplitter
-import com.libreco.model.Recommender
+import com.recora.utils.{Context, ItemNameConverter}
+import com.recora.data.DataSplitter
+import com.recora.model.Recommender
 
 import scala.util.Random
 

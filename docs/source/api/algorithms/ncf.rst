@@ -1,7 +1,7 @@
 NCF
 ---
 
-.. autoclass:: libreco.algorithms.NCF
+.. autoclass:: recora.algorithms.NCF
    :members:
    :inherited-members:
    :show-inheritance:

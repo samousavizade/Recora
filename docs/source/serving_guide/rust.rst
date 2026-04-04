@@ -4,8 +4,8 @@ Rust Serving Guide
 Introduction
 ------------
 
-This guide mainly describes how to serve a trained model in LibRecommender with `Rust <https://www.rust-lang.org/>`_.
-A Rust web server is typically much faster than its Python counterpart. In the `libserving <https://github.com/massquantity/LibRecommender/tree/master/libserving>`_ module,
+This guide mainly describes how to serve a trained model in Recora with `Rust <https://www.rust-lang.org/>`_.
+A Rust web server is typically much faster than its Python counterpart. In the `libserving <https://github.com/samousavizade/MyRec/tree/master/libserving>`_ module,
 we use `Actix <https://github.com/actix/actix-web>`_, one of the fastest web frameworks in the world.
 The overall serving procedure in this guide resembles :doc:`python`,
 so you'll need a Redis too. If you are already familiar with Rust, then follow the steps below.
@@ -22,13 +22,13 @@ KNN-based Model
 
 .. code-block:: bash
 
-    $ cd LibRecommender/libserving
+    $ cd MyRec/libserving
 
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import ItemCF
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import ItemCF
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import knn2redis, save_knn
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -72,7 +72,7 @@ so we use `Rust bindings <https://github.com/Enet4/faiss-rs>`_ to Faiss. Accordi
 one should fork the `c_api_head branch <https://github.com/Enet4/faiss/tree/c_api_head>`_
 and build faiss from source manually before including the crate. We should warn you first,
 this process can be pretty frustrating, and if you get stuck, you can view the
-`Dockerfile-rs <https://github.com/massquantity/LibRecommender/blob/master/libserving/Dockerfile-rs>`_
+`Dockerfile-rs <https://github.com/samousavizade/MyRec/blob/master/libserving/Dockerfile-rs>`_
 file to get some hints:). Or you can just save all these troubles and use :ref:`Docker Compose <Docker Compose>`.
 
 After successfully installing Rust faiss, i.e. copy the ``c_api/libfaiss_c.so`` and ``faiss/libfaiss.so``
@@ -80,13 +80,13 @@ to ``LD_LIBRARY_PATH``, the rest is straightforward:
 
 .. code-block:: bash
 
-    $ cd LibRecommender/libserving
+    $ cd MyRec/libserving
 
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import ALS
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import ALS
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import embed2redis, save_embed
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -132,13 +132,13 @@ TensorFlow-based Model
 
 .. code-block:: bash
 
-    $ cd LibRecommender/libserving
+    $ cd MyRec/libserving
 
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import DIN
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.algorithms import DIN
+    >>> from recora.data import DatasetFeat
     >>> from libserving.serialization import save_tf, tf2redis
 
     >>> train_data, data_info = DatasetFeat.build_trainset(...)
@@ -175,7 +175,7 @@ Use either develop or production mode:
 Serving with Docker Compose
 ---------------------------
 
-In `docker-compose-rs.yml <https://github.com/massquantity/LibRecommender/blob/master/libserving/docker-compose-rs.yml>`_ file,
+In `docker-compose-rs.yml <https://github.com/samousavizade/MyRec/blob/master/libserving/docker-compose-rs.yml>`_ file,
 change the corresponding ``MODEL_TYPE`` environment variable. You may also need to
 change the path of volumes if model is stored in other place. Also, Redis has already
 been included, so you don't need a Redis server locally. But one should start the docker
@@ -183,13 +183,13 @@ compose *before* saving data to Redis. For example in embed-based models:
 
 .. code-block:: bash
 
-    $ cd LibRecommender/libserving
+    $ cd MyRec/libserving
 
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import ALS
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import ALS
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import embed2redis, save_embed
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -217,7 +217,7 @@ compose *before* saving data to Redis. For example in embed-based models:
     # {"rec_list":["2628","1552","260","969","2193","733","1573","1917","1037","10"]}
 
 For TensorFlow-based models, TensorFlow Serving config is in
-`docker-compose-tf-serving.yml <https://github.com/massquantity/LibRecommender/blob/master/libserving/docker-compose-tf-serving.yml>`_ file,
+`docker-compose-tf-serving.yml <https://github.com/samousavizade/MyRec/blob/master/libserving/docker-compose-tf-serving.yml>`_ file,
 so we need to start them both, and don't forget to change the ``MODEL_BASE_PATH`` and ``MODEL_NAME``
 environment variables in the file:
 

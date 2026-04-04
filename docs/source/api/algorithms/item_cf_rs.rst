@@ -1,7 +1,7 @@
 RsItemCF
 --------
 
-.. autoclass:: libreco.algorithms.RsItemCF
+.. autoclass:: recora.algorithms.RsItemCF
    :members:
    :inherited-members:
    :show-inheritance:

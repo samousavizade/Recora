@@ -1,7 +1,7 @@
 RsUserCF
 --------
 
-.. autoclass:: libreco.algorithms.RsUserCF
+.. autoclass:: recora.algorithms.RsUserCF
    :members:
    :inherited-members:
    :show-inheritance:

@@ -4,7 +4,7 @@ Evaluation & Save/Load
 Evaluate During Training
 ------------------------
 
-The standard procedure in LibRecommender is evaluating during training.
+The standard procedure in Recora is evaluating during training.
 However, for some complex models doing full evaluation on eval data can be very
 time-consuming, so you can specify some evaluation parameters to speed this up.
 
@@ -34,14 +34,14 @@ users randomly from eval data.
 Evaluate After Training
 -----------------------
 
-After the training, one can use the :func:`~libreco.evaluation.evaluate` function to
+After the training, one can use the :func:`~recora.evaluation.evaluate` function to
 evaluate on test data directly.
 
 Note that if your evaluation data(typically in :class:`pandas.DataFrame` format) **is implicit and only contains positive label**,
 then negative sampling is needed by passing ``neg_sampling=True``:
 
 .. literalinclude:: ../../../examples/save_load_example.py
-   :caption: From file `examples/save_load_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/save_load_example.py>`_
+   :caption: From file `examples/save_load_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/save_load_example.py>`_
    :name: save_load_example.py
    :lines: 85-94
 
@@ -59,4 +59,4 @@ When making predictions and recommendations, it may be unnecessary to save all t
 variables. So one can pass ``inference_only=True`` to only save the essential model part.
 
 After loading the model, one can also evaluate the model directly,
-see `save_load_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/save_load_example.py>`_ for typical usages.
+see `save_load_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/save_load_example.py>`_ for typical usages.

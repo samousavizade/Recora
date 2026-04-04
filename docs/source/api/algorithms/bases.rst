@@ -1,32 +1,32 @@
 Base Classes
 ------------
 
-.. autoclass:: libreco.bases.Base
+.. autoclass:: recora.bases.Base
    :members:
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.EmbedBase
+.. autoclass:: recora.bases.EmbedBase
    :members:
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.TfBase
+.. autoclass:: recora.bases.TfBase
    :members:
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.CfBase
+.. autoclass:: recora.bases.CfBase
    :members:
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.RsCfBase
+.. autoclass:: recora.bases.RsCfBase
    :members:
    :inherited-members:
    :show-inheritance:
 
-.. autoclass:: libreco.bases.DynEmbedBase
+.. autoclass:: recora.bases.DynEmbedBase
    :members:
    :inherited-members:
    :show-inheritance:

@@ -4,13 +4,13 @@ parallel = True
 concurrency = multiprocessing
 
 source =
-    libreco/
+    recora/
     libserving/serialization/
     libserving/sanic_serving/
 
 omit =
-    libreco/utils/exception.py
-    libreco/utils/sampling.py
+    recora/utils/exception.py
+    recora/utils/sampling.py
     libserving/sanic_serving/benchmark.py
 
 [report]
@@ -37,7 +37,7 @@ skip_empty = True
 [html]
 directory = html-coverage-report
 
-title = LibRecommender Coverage Report
+title = Recora coverage report
 
 [xml]
 output = coverage.xml

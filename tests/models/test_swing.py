@@ -4,8 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from libreco.algorithms import Swing
-from libreco.data import DatasetPure
+from recora.algorithms import Swing
+from recora.data import DatasetPure
 from tests.utils_data import SAVE_PATH, remove_path, set_ranking_labels
 from tests.utils_metrics import get_metrics
 from tests.utils_pred import ptest_preds

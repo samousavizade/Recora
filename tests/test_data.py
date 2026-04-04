@@ -7,7 +7,7 @@ import pytest
 from numpy.testing import assert_array_equal
 from scipy.sparse import csr_matrix
 
-from libreco.data import (
+from recora.data import (
     DataInfo,
     DatasetFeat,
     DatasetPure,
@@ -15,7 +15,7 @@ from libreco.data import (
     TransformedSet,
     process_data,
 )
-from libreco.data.data_info import OldInfo, store_old_info
+from recora.data.data_info import OldInfo, store_old_info
 
 sparse_col = ["sex", "occupation", "genre1", "genre2", "genre3"]
 dense_col = ["age"]

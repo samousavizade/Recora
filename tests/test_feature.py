@@ -7,13 +7,13 @@ import pandas as pd
 import pytest
 from numpy.testing import assert_array_equal
 
-from libreco.data import DatasetFeat
-from libreco.data.data_info import EmptyFeature, Feature, store_old_info
-from libreco.feature.multi_sparse import (
+from recora.data import DatasetFeat
+from recora.data.data_info import EmptyFeature, Feature, store_old_info
+from recora.feature.multi_sparse import (
     get_multi_sparse_indices_matrix,
     recover_sparse_cols,
 )
-from libreco.feature.sparse import (
+from recora.feature.sparse import (
     column_sparse_indices,
     get_last_offset,
     get_oov_pos,
@@ -21,19 +21,19 @@ from libreco.feature.sparse import (
     merge_offset,
     merge_sparse_indices,
 )
-from libreco.feature.update import (
+from recora.feature.update import (
     update_id_unique,
     update_multi_sparse_unique,
     update_sparse_unique,
     update_unique_feats,
 )
-from libreco.prediction.preprocess import (
+from recora.prediction.preprocess import (
     features_from_batch,
     get_original_feats,
     set_temp_feats,
 )
-from libreco.recommendation.preprocess import _get_original_feats as get_rec_feats
-from libreco.recommendation.preprocess import process_embed_feat
+from recora.recommendation.preprocess import _get_original_feats as get_rec_feats
+from recora.recommendation.preprocess import process_embed_feat
 
 
 def test_invalid_features():

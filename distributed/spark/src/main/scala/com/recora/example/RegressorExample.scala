@@ -1,8 +1,8 @@
-package com.libreco.example
+package com.recora.example
 
 import org.apache.spark.ml.linalg.SparseVector
-import com.libreco.utils.{Context, ItemNameConverter}
-import com.libreco.model.Regressor
+import com.recora.utils.{Context, ItemNameConverter}
+import com.recora.model.Regressor
 
 
 object RegressorExample extends Context {

@@ -3,7 +3,7 @@ import os
 import pandas as pd
 import pytest
 
-from libreco.data import split_multi_value
+from recora.data import split_multi_value
 
 
 def test_multi_sparse_processing():

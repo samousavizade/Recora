@@ -4,9 +4,9 @@ import pandas as pd
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import DIN
-from libreco.data import DataInfo, DatasetFeat, split_by_ratio_chrono
-from libreco.evaluation import evaluate
+from recora.algorithms import DIN
+from recora.data import DataInfo, DatasetFeat, split_by_ratio_chrono
+from recora.evaluation import evaluate
 from tests.utils_data import SAVE_PATH, remove_path
 from tests.utils_pred import ptest_preds
 from tests.utils_reco import ptest_recommends

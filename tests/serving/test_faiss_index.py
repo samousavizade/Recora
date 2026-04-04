@@ -2,7 +2,7 @@ import os
 
 import pytest
 
-from libreco.algorithms import BPR
+from recora.algorithms import BPR
 from libserving.serialization import save_faiss_index
 from tests.utils_data import SAVE_PATH
 

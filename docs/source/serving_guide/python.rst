@@ -6,8 +6,8 @@ Python Serving Guide
 Introduction
 ------------
 
-This guide mainly describes how to serve a trained model using the `libserving <https://github.com/massquantity/LibRecommender/tree/master/libserving>`_ module
-in LibRecommender. Prior to LibRecommender version ``0.10.0``, `Flask <https://flask.palletsprojects.com/en/2.0.x/>`_
+This guide mainly describes how to serve a trained model using the `libserving <https://github.com/samousavizade/MyRec/tree/master/libserving>`_ module
+in Recora. Prior to Recora version ``0.10.0``, `Flask <https://flask.palletsprojects.com/en/2.0.x/>`_
 was used to construct the serving web server. However, to take full advantage of the asynchronous
 feature and modern ``async/await`` syntax in Python, we've decided to switch to `Sanic <https://github.com/sanic-org/sanic>`_ framework.
 Unlike flask, a sanic server can run in production directly, and the typical command is like this:
@@ -26,7 +26,7 @@ Refer to `Running Sanic <https://sanic.dev/en/guide/deployment/running.html>`_ f
 
 -----------
 
-From model serving's perspective, currently there are three kinds of models in LibRecommender:
+From model serving's perspective, currently there are three kinds of models in Recora:
 
 + knn-based model
 + embed-based model
@@ -41,7 +41,7 @@ The following is the main serving workflow:
 
 Here we choose NOT to save the trained model directly to redis, since:
 1) Even you save the model to redis in the first place, you'll end up with saving to disk anyway :)
-2) We try to keep the requirements of the main ``libreco`` module as minimal as possible.
+2) We try to keep the requirements of the main ``recora`` module as minimal as possible.
 
 So during serving, one should start redis server first:
 
@@ -62,13 +62,13 @@ So during serving, one should start redis server first:
 
 .. Attention::
 
-    In this guide we assume the following codes are all executed in ``LibRecommender/libserving`` folder,
+    In this guide we assume the following codes are all executed in ``MyRec/libserving`` folder,
     so one needs to clone the repository first:
 
     .. code-block:: bash
 
-        $ git clone https://github.com/massquantity/LibRecommender.git
-        $ cd LibRecommender/libserving
+        $ git clone https://github.com/samousavizade/MyRec.git
+        $ cd MyRec/libserving
 
 
 
@@ -76,7 +76,7 @@ So during serving, one should start redis server first:
 Note about Dependencies
 -----------------------
 
-The serving related dependencies are listed in `main README <https://github.com/massquantity/LibRecommender#optional-dependencies-for-libserving>`_.
+The serving related dependencies are listed in `main README <https://github.com/samousavizade/MyRec#optional-dependencies-for-libserving>`_.
 
 + `redis-py <https://github.com/redis/redis-py>`_ introduced async support since 4.2.0.
 
@@ -122,8 +122,8 @@ One should also specify model-saving ``path`` :
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import ItemCF
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import ItemCF
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import knn2redis, save_knn
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -160,8 +160,8 @@ Below is an example usage which uses ``ALS``. One should also specify model-savi
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import ALS
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import ALS
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import embed2redis, save_embed
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -205,8 +205,8 @@ Below is an example usage which uses ``DIN``. One should also specify model-savi
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import DIN
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.algorithms import DIN
+    >>> from recora.data import DatasetFeat
     >>> from libserving.serialization import save_tf, tf2redis
 
     >>> train_data, data_info = DatasetFeat.build_trainset(...)
@@ -289,7 +289,7 @@ But this only applies to ``DIN`` and other models may have different inputs.
 
 However, these are just general cases. Suppose your data doesn't have any sparse feature,
 then it would be a mistake to feed the ``sparse_indices`` input, so these matters should
-be taken into account. This is exactly where a library fits in, and LibRecommender can
+be taken into account. This is exactly where a library fits in, and Recora can
 dynamically handle these different feature situations. So as a library user, all you
 need to do is specifying the correct model path.
 
@@ -362,7 +362,7 @@ Make predictions for two samples from TensorFlow Serving service:
 
 
 Now we can start the corresponding sanic server. According to the `official doc <https://www.tensorflow.org/tfx/serving/api_rest#request_format_2>`__,
-the input tensors can use either row format or column format. In `tf_deploy.py <https://github.com/massquantity/LibRecommender/tree/master/libserving/sanic_serving/tf_deploy.py>`_
+the input tensors can use either row format or column format. In `tf_deploy.py <https://github.com/samousavizade/MyRec/tree/master/libserving/sanic_serving/tf_deploy.py>`_
 we use column format since it's more compact.
 
 .. code-block:: bash

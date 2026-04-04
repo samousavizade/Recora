@@ -36,7 +36,7 @@ class YouTubeRetrieval(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
     ----------
     task : {'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     loss_type : {'sampled_softmax', 'nce'}, default: 'sampled_softmax'
         Loss for model training.

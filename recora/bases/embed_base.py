@@ -24,13 +24,13 @@ class EmbedBase(Base):
     """Base class for embed models.
 
     Models that can generate user and item embeddings for inference.
-    See `algorithm list <https://github.com/massquantity/LibRecommender#references>`_.
+    See `algorithm list <https://github.com/samousavizade/MyRec#references>`_.
 
     Parameters
     ----------
     task : {'rating', 'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     embed_size: int
         Vector size of embeddings.
@@ -77,7 +77,7 @@ class EmbedBase(Base):
 
         Parameters
         ----------
-        train_data : :class:`~libreco.data.TransformedSet` object
+        train_data : :class:`~recora.data.TransformedSet` object
             Data object used for training.
         neg_sampling : bool
             Whether to perform negative sampling for training or evaluating data.
@@ -97,7 +97,7 @@ class EmbedBase(Base):
 
         shuffle : bool, default: True
             Whether to shuffle the training data.
-        eval_data : :class:`~libreco.data.TransformedSet` object, default: None
+        eval_data : :class:`~recora.data.TransformedSet` object, default: None
             Data object used for evaluating.
         metrics : list or None, default: None
             List of metrics for evaluating.
@@ -176,7 +176,7 @@ class EmbedBase(Base):
               representation of the cold-start user/item.
 
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
 
         Returns
@@ -211,7 +211,7 @@ class EmbedBase(Base):
               representation of the cold-start user/item.
 
         inner_id : bool, default: False
-            Whether to use inner_id defined in `libreco`. For library users inner_id
+            Whether to use inner_id defined in `recora`. For library users inner_id
             may never be used.
         filter_consumed : bool, default: True
             Whether to filter out items that a user has previously consumed.
@@ -305,7 +305,7 @@ class EmbedBase(Base):
             File folder path to save model.
         model_name : str
             Name of the saved model file.
-        data_info : :class:`~libreco.data.DataInfo` object
+        data_info : :class:`~recora.data.DataInfo` object
             Object that contains some useful information.
 
         Returns

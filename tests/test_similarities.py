@@ -6,8 +6,8 @@ import pandas as pd
 import pytest
 from scipy.sparse import csr_matrix
 
-from libreco.data import DatasetPure
-from libreco.utils.similarities import (
+from recora.data import DatasetPure
+from recora.utils.similarities import (
     _choose_blocks,
     cosine_sim,
     jaccard_sim,
@@ -96,7 +96,7 @@ def test_similarities_large(prepare_pure_data, func, num_threads, min_common):
 
 # def test_failed_import(monkeypatch):
 #    with monkeypatch.context() as m:
-#        m.delitem(sys.modules, "libreco.utils.similarities")
-#        m.setitem(sys.modules, "libreco.utils._similarities", None)
+#        m.delitem(sys.modules, "recora.utils.similarities")
+#        m.setitem(sys.modules, "recora.utils._similarities", None)
 #        with pytest.raises((ImportError, ModuleNotFoundError)):
-#            from libreco.utils.similarities import cosine_sim
+#            from recora.utils.similarities import cosine_sim

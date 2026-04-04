@@ -3,7 +3,7 @@ import sys
 import numpy as np
 import pytest
 
-from libreco.algorithms import RsItemCF
+from recora.algorithms import RsItemCF
 from tests.utils_data import remove_path, set_ranking_labels
 from tests.utils_metrics import get_metrics
 from tests.utils_pred import ptest_preds

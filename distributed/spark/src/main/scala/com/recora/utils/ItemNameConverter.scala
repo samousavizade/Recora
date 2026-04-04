@@ -1,4 +1,4 @@
-package com.libreco.utils
+package com.recora.utils
 
 import org.apache.spark.sql.expressions.UserDefinedFunction
 import org.apache.spark.sql.{DataFrame, Dataset}

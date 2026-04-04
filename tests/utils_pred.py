@@ -1,6 +1,6 @@
 import numpy as np
 
-from libreco.prediction import predict_data_with_feats
+from recora.prediction import predict_data_with_feats
 
 
 def ptest_preds(model, task, pd_data, with_feats):

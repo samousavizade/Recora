@@ -4,7 +4,7 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from libreco.data import DatasetFeat, DatasetPure, split_by_ratio_chrono
+from recora.data import DatasetFeat, DatasetPure, split_by_ratio_chrono
 from tests.utils_data import SAVE_PATH, remove_path
 
 

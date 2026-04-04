@@ -8,9 +8,9 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
 
 ADD ../requirements.txt /root
-RUN pip install --no-cache-dir -r requirements.txt -i https://pypi.tuna.tsinghua.edu.cn/simple
-RUN pip install --no-cache-dir LibRecommender
-RUN pip install --no-cache-dir jupyterlab==3.5.0 -i https://pypi.tuna.tsinghua.edu.cn/simple
+RUN pip install --no-cache-dir -r requirements.txt 
+RUN pip install --no-cache-dir recora
+RUN pip install --no-cache-dir jupyterlab==3.5.0 
 
 RUN jupyter server --generate-config --allow-root
 # password generated based on https://jupyter-notebook.readthedocs.io/en/stable/config.html

@@ -1,14 +1,14 @@
 Split
 =====
 
-.. autofunction:: libreco.data.random_split
+.. autofunction:: recora.data.random_split
 
-.. autofunction:: libreco.data.split_by_ratio
+.. autofunction:: recora.data.split_by_ratio
 
-.. autofunction:: libreco.data.split_by_num
+.. autofunction:: recora.data.split_by_num
 
-.. autofunction:: libreco.data.split_by_ratio_chrono
+.. autofunction:: recora.data.split_by_ratio_chrono
 
-.. autofunction:: libreco.data.split_by_num_chrono
+.. autofunction:: recora.data.split_by_num_chrono
 
-.. autofunction:: libreco.data.split_multi_value
+.. autofunction:: recora.data.split_multi_value

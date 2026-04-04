@@ -2,7 +2,7 @@
 
 ## Introduction
 
-This guide mainly describes how to serve a trained model using the `libserving` module in LibRecommender. Prior to 0.10.0, [Flask](<https://flask.palletsprojects.com/en/1.1.x/>) was used to construct the serving web server. However, to take full advantage of the asynchronous feature and modern `async/await` syntax in Python, we've decided to switch to [Sanic](https://github.com/sanic-org/sanic) framework. Unlike flask, a sanic server can run in production directly, and the typical command is like this:
+This guide mainly describes how to serve a trained model using the `libserving` module in Recora. Prior to 0.10.0, [Flask](<https://flask.palletsprojects.com/en/1.1.x/>) was used to construct the serving web server. However, to take full advantage of the asynchronous feature and modern `async/await` syntax in Python, we've decided to switch to [Sanic](https://github.com/sanic-org/sanic) framework. Unlike flask, a sanic server can run in production directly, and the typical command is like this:
 
 ```bash
 $ sanic server:app --host=127.0.0.1 --port=8000 --dev --access-logs -v --workers 1  # develop mode
@@ -11,11 +11,11 @@ $ sanic server:app --no-access-logs --workers 10  # production mode
 
 Refer to [Running Sanic](https://sanic.dev/en/guide/deployment/running.html) for more details.
 
-Beyond Python, one can also use Rust to serve a model. See [Rust Serving Guide](https://github.com/massquantity/LibRecommender/blob/master/doc/rust_serving_guide.md).
+Beyond Python, one can also use Rust to serve a model. See [Rust Serving Guide](https://github.com/samousavizade/MyRec/blob/master/doc/rust_serving_guide.md).
 
 <br>
 
-From serving's perspective, currently there are three kinds of models in LibRecommender: 
+From serving's perspective, currently there are three kinds of models in Recora: 
 
 + knn-based model
 + embed-based model 
@@ -28,7 +28,7 @@ The following is the main serving workflow:
 3. Run a sanic server.
 4. Make http request to the server and gain recommendation.
 
-Here we choose NOT to save the trained model directly to redis, since:  1) Even you save the model to redis in the first place, you'll end up with saving to disk anyway :)  2) We try to keep the requirements of the main `libreco` module as minimal as possible.
+Here we choose NOT to save the trained model directly to redis, since:  1) Even you save the model to redis in the first place, you'll end up with saving to disk anyway :)  2) We try to keep the requirements of the main `recora` module as minimal as possible.
 
 So during serving, one should start redis server first: 
 
@@ -38,17 +38,17 @@ $ redis-server
 
 Note that sometimes using redis in model serving can be error-prone. For example, you served a `DeepFM` model at first, and later on you decided to use another `pure` model, say `NCF`.  Since `DeepFM` is a `feat` model, some feature information may have been saved into redis. If you forget to remove these feature information before using `NCF`, the server may mistakenly load it and eventually cause an error.
 
-**Also in this guide we assume the following codes are all executed in `LibRecommender/libserving` folder**:
+**Also in this guide we assume the following codes are all executed in `MyRec/libserving` folder**:
 
 ```bash
-$ cd LibRecommender/libserving
+$ cd MyRec/libserving
 ```
 
 
 
 ## Note about dependencies
 
-The serving related dependencies are listed in [main README](https://github.com/massquantity/LibRecommender#optional-dependencies-for-libserving). 
+The serving related dependencies are listed in [main README](https://github.com/samousavizade/MyRec#optional-dependencies-for-libserving). 
 
 + [redis-py](https://github.com/redis/redis-py) introduced async support since 4.2.0.
 
@@ -79,8 +79,8 @@ KNN-based models refer to the classic `UserCF` and `ItemCF` algorithms, which le
 Below is an example usage which saves 10 neighbors per item using ItermCF. One should also specify model-saving `path` : 
 
 ```python
->>> from libreco.algorithms import ItemCF
->>> from libreco.data import DatasetPure
+>>> from recora.algorithms import ItemCF
+>>> from recora.data import DatasetPure
 >>> from libserving.serialization import knn2redis, save_knn
 
 >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -111,8 +111,8 @@ In practice, to speed up serving, some ANN(Approximate Nearest Neighbors) librar
 Below is an example usage which uses `ALS`. One should also specify model-saving `path` : 
 
 ```python
->>> from libreco.algorithms import ALS
->>> from libreco.data import DatasetPure
+>>> from recora.algorithms import ALS
+>>> from recora.data import DatasetPure
 >>> from libserving.serialization import embed2redis, save_embed
 
 >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -150,8 +150,8 @@ We assume TensorFlow Serving has already been installed through Docker. After su
 Below is an example usage which uses `DIN`. One should also specify model-saving `path` : 
 
 ```python
->>> from libreco.algorithms import DIN
->>> from libreco.data import DatasetFeat
+>>> from recora.algorithms import DIN
+>>> from recora.data import DatasetFeat
 >>> from libserving.serialization import save_tf, tf2redis
 
 >>> train_data, data_info = DatasetFeat.build_trainset(...)
@@ -224,7 +224,7 @@ For `WideDeep`,  `FM`,  `DeepFM` , `AutoInt`, since they don't use behavior sequ
 
 Finally, `YouTubeRanking` has same inputs as `DIN`. They both use behavior sequence information.
 
-However, these are just general cases. Suppose your data doesn't have any sparse feature, then it would be a mistake to feed the `sparse_indices` input, so these matters should be taken into account. This is exactly where a library fits in, and LibRecommender can dynamically handle these different feature situations. So as a library user, all you need to do is specifying the correct model path.
+However, these are just general cases. Suppose your data doesn't have any sparse feature, then it would be a mistake to feed the `sparse_indices` input, so these matters should be taken into account. This is exactly where a library fits in, and Recora can dynamically handle these different feature situations. So as a library user, all you need to do is specifying the correct model path.
 
 <br>
 
@@ -287,7 +287,7 @@ curl -d '{"signature_name": "predict", "inputs": {"user_indices": [1, 2], "item_
 }
 ```
 
-Now we can start the corresponding sanic server. According to the [official doc](https://www.tensorflow.org/tfx/serving/api_rest#request_format_2), the input tensors can use either row format or column format. In [`tf_deploy.py`](https://github.com/massquantity/LibRecommender/tree/master/libserving/sanic_serving/tf_deploy.py) we use column format since it's more compact.
+Now we can start the corresponding sanic server. According to the [official doc](https://www.tensorflow.org/tfx/serving/api_rest#request_format_2), the input tensors can use either row format or column format. In [`tf_deploy.py`](https://github.com/samousavizade/MyRec/tree/master/libserving/sanic_serving/tf_deploy.py) we use column format since it's more compact.
 
 ```bash
 $ sanic sanic_serving.tf_deploy:app --dev --access-logs -v --workers 1  # run sanic server

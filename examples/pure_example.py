@@ -1,9 +1,16 @@
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import pandas as pd
 import tensorflow as tf
 
-from libreco.algorithms import BPR  # pure data, algorithm BPR
-from libreco.data import DatasetPure, random_split
-from libreco.evaluation import evaluate
+from recora.algorithms import BPR  # pure data, algorithm BPR
+from recora.data import DatasetPure, random_split
+from recora.evaluation import evaluate
 
 
 def reset_state(name):

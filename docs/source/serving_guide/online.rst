@@ -22,8 +22,8 @@ Below is an example usage that uses ``RNN4Rec`` with dynamic behavior sequence:
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import RNN4Rec
-    >>> from libreco.data import DatasetPure
+    >>> from recora.algorithms import RNN4Rec
+    >>> from recora.data import DatasetPure
     >>> from libserving.serialization import save_online, online2redis
 
     >>> train_data, data_info = DatasetPure.build_trainset(...)
@@ -62,8 +62,8 @@ Below is an example usage that uses ``TwoTower`` with dynamic user features:
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import TwoTower
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.algorithms import TwoTower
+    >>> from recora.data import DatasetFeat
     >>> from libserving.serialization import save_online, online2redis
 
     >>> train_data, data_info = DatasetFeat.build_trainset(...)
@@ -99,8 +99,8 @@ Below is an example usage that uses ``DIN`` with dynamic user features and seque
 
 .. code-block:: python3
 
-    >>> from libreco.algorithms import DIN
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.algorithms import DIN
+    >>> from recora.data import DatasetFeat
     >>> from libserving.serialization import save_online, online2redis
 
     >>> train_data, data_info = DatasetFeat.build_trainset(...)

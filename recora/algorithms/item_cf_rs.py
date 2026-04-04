@@ -9,7 +9,7 @@ class RsItemCF(RsCfBase):
     ----------
     task : {'rating', 'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     k_sim : int, default: 20
         Number of similar items to use.

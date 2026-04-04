@@ -3,7 +3,7 @@ import sys
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import FM
+from recora.algorithms import FM
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import SAVE_PATH, remove_path, set_ranking_labels
 from tests.utils_metrics import get_metrics

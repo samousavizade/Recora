@@ -1,9 +1,16 @@
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import time
 
 import pandas as pd
 
-from libreco.algorithms import ItemCF, UserCF
-from libreco.data import DatasetPure, split_by_ratio_chrono
+from recora.algorithms import ItemCF, UserCF
+from recora.data import DatasetPure, split_by_ratio_chrono
 
 if __name__ == "__main__":
     start_time = time.perf_counter()

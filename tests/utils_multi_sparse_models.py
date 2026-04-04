@@ -1,6 +1,6 @@
 import tensorflow as tf
 
-from libreco.bases import TfBase
+from recora.bases import TfBase
 
 
 def fit_multi_sparse(cls, train_data, eval_data, data_info, lr=None):

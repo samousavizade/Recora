@@ -1,7 +1,7 @@
-package com.libreco.example
+package com.recora.example
 
-import com.libreco.model.Classifier
-import com.libreco.utils.{Context, ItemNameConverter}
+import com.recora.model.Classifier
+import com.recora.utils.{Context, ItemNameConverter}
 import org.apache.spark.sql.functions.{round, sum, udf}
 
 

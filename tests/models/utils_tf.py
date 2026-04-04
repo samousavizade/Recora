@@ -1,4 +1,4 @@
-from libreco.tfops import tf
+from recora.tfops import tf
 
 
 def ptest_tf_variables(model):

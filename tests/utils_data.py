@@ -4,7 +4,7 @@ from pathlib import Path
 
 import numpy as np
 
-from libreco.data import TransformedEvalSet, TransformedSet
+from recora.data import TransformedEvalSet, TransformedSet
 
 SAVE_PATH = os.path.join(str(Path(os.path.realpath(__file__)).parent), "save_path")
 

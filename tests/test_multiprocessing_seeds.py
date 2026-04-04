@@ -4,7 +4,7 @@ import random
 import numpy as np
 import pytest
 
-from libreco.batch.batch_data import BatchLoader
+from recora.batch.batch_data import BatchLoader
 
 
 class DummyBatchData:

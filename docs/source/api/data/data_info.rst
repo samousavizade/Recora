@@ -1,8 +1,8 @@
 DataInfo
 ========
 
-.. autoclass:: libreco.data.DataInfo
+.. autoclass:: recora.data.DataInfo
    :members:
    :special-members: __repr__
 
-.. autoclass:: libreco.data.MultiSparseInfo
+.. autoclass:: recora.data.MultiSparseInfo

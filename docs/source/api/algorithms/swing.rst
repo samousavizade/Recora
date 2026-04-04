@@ -1,7 +1,7 @@
 Swing
 -----
 
-.. autoclass:: libreco.algorithms.Swing
+.. autoclass:: recora.algorithms.Swing
    :members:
    :inherited-members:
    :show-inheritance:

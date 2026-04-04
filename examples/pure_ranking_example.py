@@ -1,9 +1,16 @@
+import sys
+from pathlib import Path
+
+_REPO_ROOT = Path(__file__).resolve().parents[1]
+if str(_REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(_REPO_ROOT))
+
 import time
 
 import pandas as pd
 import tensorflow as tf
 
-from libreco.algorithms import (
+from recora.algorithms import (
     ALS,
     BPR,
     NCF,
@@ -15,7 +22,7 @@ from libreco.algorithms import (
     UserCF,
     WaveNet,
 )
-from libreco.data import DatasetPure, split_by_ratio_chrono
+from recora.data import DatasetPure, split_by_ratio_chrono
 
 
 def reset_state(name):

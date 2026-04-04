@@ -21,7 +21,7 @@ class Swing(Base):
     ----------
     task : {'ranking'}
         Recommendation task. See :ref:`Task`.
-    data_info : :class:`~libreco.data.DataInfo` object
+    data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
     top_k : int, default: 20
         Number of items to consider during recommendation.

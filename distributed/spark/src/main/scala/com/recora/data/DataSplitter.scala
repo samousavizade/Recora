@@ -1,10 +1,10 @@
-package com.libreco.data
+package com.recora.data
 
 import org.apache.spark.sql.{DataFrame, Dataset, Row}
 import org.apache.spark.sql.functions.{collect_list, count, lit, row_number, size, col, rand}
 import org.apache.spark.sql.expressions.Window
 import scala.collection.mutable.ArrayBuffer
-import com.libreco.utils.Context
+import com.recora.utils.Context
 
 import scala.util.Random
 

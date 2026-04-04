@@ -37,7 +37,7 @@ jobs:
         if: matrix.python-version == '3.6'
 
       - name: Test install
-        run: python -c "import libreco; print('libreco --', libreco.__version__)"
+        run: python -c "import recora; print('recora --', recora.__version__)"
 
       - name: Test running on Linux
         run: |
@@ -48,8 +48,8 @@ jobs:
 
       - name: Test running on Windows
         run: |
-          copy D:\a\LibRecommender\LibRecommender\tests\sample_data\sample_movielens_rating.dat D:\a\
-          copy D:\a\LibRecommender\LibRecommender\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
+          copy D:\a\MyRec\MyRec\tests\sample_data\sample_movielens_rating.dat D:\a\
+          copy D:\a\MyRec\MyRec\tests\compatibility_test.py D:\a\ && Set-Location -Path "D:\a\"
           python -m compatibility_test
         if: matrix.os == 'windows-latest'
 

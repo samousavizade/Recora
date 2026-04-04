@@ -1,7 +1,7 @@
 ItemCF
 ------
 
-.. autoclass:: libreco.algorithms.ItemCF
+.. autoclass:: recora.algorithms.ItemCF
    :members:
    :inherited-members:
    :show-inheritance:

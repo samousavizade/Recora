@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from libreco.recommendation import rank_recommendations
+from recora.recommendation import rank_recommendations
 
 
 def test_rank_reco():

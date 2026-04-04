@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from libreco.utils.constants import FeatModels, SequenceModels
+from recora.utils.constants import FeatModels, SequenceModels
 
 
 def recommend_in_former_consumed(data_info, reco, user):

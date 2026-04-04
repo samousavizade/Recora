@@ -1,32 +1,32 @@
-LibRecommender
+Recora
 ==============
 
-.. image:: https://img.shields.io/github/actions/workflow/status/massquantity/LibRecommender/wheels.yml?branch=master
-   :target: https://github.com/massquantity/LibRecommender/actions/workflows/wheels.yml
+.. image:: https://img.shields.io/github/actions/workflow/status/samousavizade/MyRec/wheels.yml?branch=master
+   :target: https://github.com/samousavizade/MyRec/actions/workflows/wheels.yml
    :alt: Build status
 
-.. image:: https://readthedocs.org/projects/librecommender/badge/?version=stable
-    :target: https://librecommender.readthedocs.io/en/stable/?badge=stable
+.. image:: https://readthedocs.org/projects/recora/badge/?version=stable
+    :target: https://recora.readthedocs.io/en/stable/?badge=stable
     :alt: Documentation Status
 
-.. image:: https://github.com/massquantity/LibRecommender/actions/workflows/ci.yml/badge.svg
-   :target: https://github.com/massquantity/LibRecommender/actions/workflows/ci.yml
+.. image:: https://github.com/samousavizade/MyRec/actions/workflows/ci.yml/badge.svg
+   :target: https://github.com/samousavizade/MyRec/actions/workflows/ci.yml
    :alt: CI status
 
-.. image:: https://codecov.io/gh/massquantity/LibRecommender/branch/master/graph/badge.svg?token=BYOYFBUJRL
-   :target: https://codecov.io/gh/massquantity/LibRecommender
+.. image:: https://codecov.io/gh/samousavizade/MyRec/branch/master/graph/badge.svg?token=BYOYFBUJRL
+   :target: https://codecov.io/gh/samousavizade/MyRec
    :alt: Codecov status
 
-.. image:: https://img.shields.io/pypi/v/LibRecommender?color=blue
-   :target: https://pypi.org/project/LibRecommender/
+.. image:: https://img.shields.io/pypi/v/recora?color=blue
+   :target: https://pypi.org/project/recora/
    :alt: Pypi version
 
-.. image:: https://static.pepy.tech/personalized-badge/librecommender?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
-   :target: https://pepy.tech/project/librecommender
+.. image:: https://static.pepy.tech/personalized-badge/recora?period=total&units=international_system&left_color=grey&right_color=lightgrey&left_text=Downloads
+   :target: https://pepy.tech/project/recora
    :alt: Downloads
 
 .. image:: https://app.codacy.com/project/badge/Grade/860f0cb5339c41fba9bee5770d09be47
-   :target: https://www.codacy.com/gh/massquantity/LibRecommender/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=massquantity/LibRecommender&amp;utm_campaign=Badge_Grade
+   :target: https://www.codacy.com/gh/samousavizade/MyRec/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=samousavizade/MyRec&amp;utm_campaign=Badge_Grade
    :alt: Codacy
 
 .. image:: https://img.shields.io/badge/code%20style-black-000000.svg
@@ -37,19 +37,19 @@ LibRecommender
    :target: https://github.com/charliermarsh/ruff
    :alt: Ruff
 
-.. image:: https://img.shields.io/github/license/massquantity/LibRecommender?color=ff69b4
-   :target: https://github.com/massquantity/LibRecommender/blob/master/LICENSE
+.. image:: https://img.shields.io/github/license/samousavizade/MyRec?color=ff69b4
+   :target: https://github.com/samousavizade/MyRec/blob/master/LICENSE
    :alt: License
 
 ------------------
 
-**LibRecommender** is an easy-to-use recommender system focused on end-to-end recommendation process.
-It contains a training(`libreco <https://github.com/massquantity/LibRecommender/tree/master/libreco>`_) and serving(`libserving <https://github.com/massquantity/LibRecommender/tree/master/libserving>`_)
+**Recora** is an easy-to-use recommender system focused on end-to-end recommendation process.
+It contains a training(`recora <https://github.com/samousavizade/MyRec/tree/master/recora>`_) and serving(`libserving <https://github.com/samousavizade/MyRec/tree/master/libserving>`_)
 module to let users quickly train and deploy different kinds of recommendation models.
 
 **The main features are:**
 
-+ Implements a number of popular recommendation algorithms such as FM, DIN, BPR etc. See `full algorithm list <https://github.com/massquantity/LibRecommender#references>`_.
++ Implements a number of popular recommendation algorithms such as FM, DIN, BPR etc. See `full algorithm list <https://github.com/samousavizade/MyRec#references>`_.
 + A hybrid recommender system, which allows users to use either collaborative-filtering or content-based features. New features can be added on the fly.
 + Low memory usage, automatically convert categorical and multi-value categorical features to sparse representation.
 + Supports training for both explicit and implicit datasets, as well as negative sampling on implicit data.
@@ -71,14 +71,14 @@ The two tabs below demonstrate the process of train, evaluate, predict, recommen
 .. tab:: pure_example
 
     .. literalinclude:: ../../examples/pure_example.py
-       :caption: From file `examples/pure_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/pure_example.py>`_
+       :caption: From file `examples/pure_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/pure_example.py>`_
        :name: pure_example.py
        :lines: 15-
 
 .. tab:: feat_example
 
     .. literalinclude:: ../../examples/feat_example.py
-       :caption: From file `examples/feat_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/feat_example.py>`_
+       :caption: From file `examples/feat_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/feat_example.py>`_
        :name: feat_example.py
        :lines: 10-
 
@@ -135,8 +135,8 @@ The two tabs below demonstrate the process of train, evaluate, predict, recommen
    :caption: Outro
    :hidden:
 
-   Docker <https://github.com/massquantity/LibRecommender/tree/master/docker>
-   Github <https://github.com/massquantity/LibRecommender>
+   Docker <https://github.com/samousavizade/MyRec/tree/master/docker>
+   Github <https://github.com/samousavizade/MyRec>
 
 Indices and tables
 ..................

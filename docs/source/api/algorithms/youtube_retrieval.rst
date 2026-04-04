@@ -1,7 +1,7 @@
 YouTubeRetrieval
 ----------------
 
-.. autoclass:: libreco.algorithms.YouTubeRetrieval
+.. autoclass:: recora.algorithms.YouTubeRetrieval
    :members:
    :inherited-members:
    :show-inheritance:

@@ -1,7 +1,7 @@
 Wide & Deep
 -----------
 
-.. autoclass:: libreco.algorithms.WideDeep
+.. autoclass:: recora.algorithms.WideDeep
    :members:
    :inherited-members:
    :show-inheritance:

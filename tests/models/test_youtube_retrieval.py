@@ -2,7 +2,7 @@ import pytest
 import tensorflow as tf
 from numpy.testing import assert_array_equal
 
-from libreco.algorithms import YouTubeRetrieval
+from recora.algorithms import YouTubeRetrieval
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import SAVE_PATH, remove_path, set_ranking_labels
 from tests.utils_metrics import get_metrics

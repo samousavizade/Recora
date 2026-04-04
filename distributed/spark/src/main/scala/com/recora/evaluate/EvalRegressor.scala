@@ -1,6 +1,6 @@
-package com.libreco.evaluate
+package com.recora.evaluate
 
-import com.libreco.data.DataSplitter
+import com.recora.data.DataSplitter
 import org.apache.spark.sql.{Column, DataFrame}
 import org.apache.spark.ml.{Pipeline, PipelineModel, PipelineStage}
 import org.apache.spark.ml.regression.{GBTRegressor, GeneralizedLinearRegression}

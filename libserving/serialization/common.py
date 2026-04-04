@@ -4,10 +4,10 @@ import sys
 
 import ujson
 
-from libreco.bases import Base
-from libreco.data import DataInfo
-from libreco.data.data_info import EmptyFeature
-from libreco.utils.misc import colorize
+from recora.bases import Base
+from recora.data import DataInfo
+from recora.data.data_info import EmptyFeature
+from recora.utils.misc import colorize
 
 
 def save_model_name(path: str, model: Base):

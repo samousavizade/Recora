@@ -1,7 +1,7 @@
 Dataset
 =======
 
-.. automodule:: libreco.data.dataset
+.. automodule:: recora.data.dataset
    :members:
    :inherited-members:
    :show-inheritance:

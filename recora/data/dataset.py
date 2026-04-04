@@ -115,7 +115,7 @@ class _Dataset(object):
 
         Returns
         -------
-        :class:`~libreco.data.TransformedEvalSet`
+        :class:`~recora.data.TransformedEvalSet`
             Transformed Data object used for evaluating.
         """
         return cls._transform_test_factory(eval_data, shuffle, seed)
@@ -139,7 +139,7 @@ class _Dataset(object):
 
         Returns
         -------
-        :class:`~libreco.data.TransformedEvalSet`
+        :class:`~recora.data.TransformedEvalSet`
             Transformed Data object used for testing.
         """
         return cls._transform_test_factory(test_data, shuffle, seed)
@@ -163,7 +163,7 @@ class _Dataset(object):
 
         Returns
         -------
-        :class:`~libreco.data.TransformedEvalSet`
+        :class:`~recora.data.TransformedEvalSet`
             Transformed Data object used for testing.
         """
         return cls._transform_test_factory(eval_data, shuffle, seed, data_info)
@@ -187,7 +187,7 @@ class _Dataset(object):
 
         Returns
         -------
-        :class:`~libreco.data.TransformedEvalSet`
+        :class:`~recora.data.TransformedEvalSet`
             Transformed Data object used for testing.
         """
         return cls._transform_test_factory(test_data, shuffle, seed, data_info)
@@ -198,7 +198,7 @@ class DatasetPure(_Dataset):
 
     Examples
     --------
-    >>> from libreco.data import DatasetPure
+    >>> from recora.data import DatasetPure
     >>> train_data, data_info = DatasetPure.build_trainset(train_data)
     >>> eval_data = DatasetPure.build_evalset(eval_data)
     >>> test_data = DatasetPure.build_testset(test_data)
@@ -227,9 +227,9 @@ class DatasetPure(_Dataset):
 
         Returns
         -------
-        trainset : :class:`~libreco.data.TransformedSet`
+        trainset : :class:`~recora.data.TransformedSet`
             Transformed Data object used for training.
-        data_info : :class:`~libreco.data.DataInfo`
+        data_info : :class:`~recora.data.DataInfo`
             Object that contains some useful information.
         """
         cls._check_subclass()
@@ -285,9 +285,9 @@ class DatasetPure(_Dataset):
 
         Returns
         -------
-        new_trainset : :class:`~libreco.data.TransformedSet`
+        new_trainset : :class:`~recora.data.TransformedSet`
             New transformed Data object used for training.
-        new_data_info : :class:`~libreco.data.DataInfo`
+        new_data_info : :class:`~recora.data.DataInfo`
             New ``data_info`` that contains some useful information.
         """
         assert isinstance(data_info, DataInfo), "Invalid passed `data_info`."
@@ -332,7 +332,7 @@ class DatasetFeat(_Dataset):
 
     Examples
     --------
-    >>> from libreco.data import DatasetFeat
+    >>> from recora.data import DatasetFeat
     >>> train_data, data_info = DatasetFeat.build_trainset(train_data)
     >>> eval_data = DatasetFeat.build_evalset(eval_data)
     >>> test_data = DatasetFeat.build_testset(test_data)
@@ -439,9 +439,9 @@ class DatasetFeat(_Dataset):
 
         Returns
         -------
-        trainset : :class:`~libreco.data.TransformedSet`
+        trainset : :class:`~recora.data.TransformedSet`
             Transformed Data object used for training.
-        data_info : :class:`~libreco.data.DataInfo`
+        data_info : :class:`~recora.data.DataInfo`
             Object that contains some useful information.
 
         Raises
@@ -571,9 +571,9 @@ class DatasetFeat(_Dataset):
 
         Returns
         -------
-        new_trainset : :class:`~libreco.data.TransformedSet`
+        new_trainset : :class:`~recora.data.TransformedSet`
             New transformed Data object used for training.
-        new_data_info : :class:`~libreco.data.DataInfo`
+        new_data_info : :class:`~recora.data.DataInfo`
             New ``data_info`` that contains some useful information.
         """
         assert isinstance(data_info, DataInfo), "Invalid passed `data_info`."

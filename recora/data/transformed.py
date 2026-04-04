@@ -31,8 +31,8 @@ class TransformedSet:
 
     See Also
     --------
-    :class:`~libreco.data.dataset.DatasetPure`
-    :class:`~libreco.data.dataset.DatasetFeat`
+    :class:`~recora.data.dataset.DatasetPure`
+    :class:`~recora.data.dataset.DatasetFeat`
     """
 
     def __init__(

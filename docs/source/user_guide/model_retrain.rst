@@ -33,7 +33,7 @@ Things become even more desperate if we also want to save and restore the optimi
 e.g. the first and second moments in Adam optimizer. Since these variables are used as states in optimizers,
 failing to keep them means losing the previous training state.
 
-Solution in LibRecommender
+Solution in Recora
 --------------------------
 
 So our solution is extracting all the variables to :class:`numpy.ndarray` format, then saving them using the ``save``
@@ -46,20 +46,20 @@ leveraging the numpy way. If you set ``manual=False``, the model may use the ``t
 user/item in new data.
 
 .. literalinclude:: ../../../examples/model_retrain_example.py
-   :caption: From file `examples/model_retrain_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/model_retrain_example.py>`_
+   :caption: From file `examples/model_retrain_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/model_retrain_example.py>`_
    :name: model_retrain_example.py
    :lines: 71-73
 
 Before retraining the model, the new data should also be transformed. Since the old ``data_info``
 already exists, we need to merge new information with the old one,
 especially those new users/items/features from new data. This is achieved by calling
-:meth:`~libreco.data.dataset.DatasetFeat.merge_trainset`,
-:meth:`~libreco.data.dataset.DatasetFeat.merge_evalset`,
-:meth:`~libreco.data.dataset.DatasetFeat.merge_testset`
+:meth:`~recora.data.dataset.DatasetFeat.merge_trainset`,
+:meth:`~recora.data.dataset.DatasetFeat.merge_evalset`,
+:meth:`~recora.data.dataset.DatasetFeat.merge_testset`
 functions.
 
 During recommendation, we usually want to filter some items that a user has previously consumed,
-which are also stored in :class:`~libreco.data.DataInfo` object. So if you want to combine the user-consumed
+which are also stored in :class:`~recora.data.DataInfo` object. So if you want to combine the user-consumed
 information in old data with that in new data, you can pass ``merge_behavior=True``:
 
 .. _retrain_data:
@@ -68,7 +68,7 @@ information in old data with that in new data, you can pass ``merge_behavior=Tru
 
    >>> train_data, new_data_info = DatasetFeat.merge_trainset(train, data_info, merge_behavior=True)
 
-Finally, loading the old variables and assigning them to the new model requires only one function :meth:`~libreco.algorithms.DeepFM.rebuild_model`:
+Finally, loading the old variables and assigning them to the new model requires only one function :meth:`~recora.algorithms.DeepFM.rebuild_model`:
 
 .. code-block:: python3
 
@@ -76,4 +76,4 @@ Finally, loading the old variables and assigning them to the new model requires 
 
 .. SeeAlso::
 
-    `model_retrain_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/model_retrain_example.py>`__
+    `model_retrain_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/model_retrain_example.py>`__

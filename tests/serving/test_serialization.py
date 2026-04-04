@@ -7,8 +7,8 @@ import pytest
 # noinspection PyUnresolvedReferences
 from tensorflow.core.protobuf.meta_graph_pb2 import MetaGraphDef
 
-from libreco.bases import CfBase, TfBase
-from libreco.tfops import tf
+from recora.bases import CfBase, TfBase
+from recora.tfops import tf
 from libserving.serialization import (
     embed2redis,
     knn2redis,

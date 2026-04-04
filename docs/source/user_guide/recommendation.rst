@@ -9,7 +9,7 @@ i.e. ``len(user_consumed) + n_rec > n_items``, the consumed items will not be fi
 since there are not enough items to recommend. If you don't want to filter out consumed items,
 set ``filter_consumed=False``.
 
-LibRecommender also supports random recommendation by setting ``random_rec=True``
+Recora also supports random recommendation by setting ``random_rec=True``
 (By default it is False). Of course, it's not completely random, but random sampling
 based on each item's prediction scores. It's basically a trade-off between accuracy and diversity.
 
@@ -27,7 +27,7 @@ Cold Start
 It is very common to encounter new users or items that doesn't exist in training data,
 which is hard to make recommendations for them. This is the notorious "cold-start" problem in recommender system.
 
-There are two strategies in LibRecommender to handle the cold-start problem: ``popular`` and ``average``.
+There are two strategies in Recora to handle the cold-start problem: ``popular`` and ``average``.
 The ``popular`` strategy simply returns the most popular items in training data.
 
 The ``average`` strategy means using the average of all the user/item embeddings as the
@@ -36,8 +36,8 @@ predictions and recommendations. This strategy indicates that a cold-start user/
 behavior is treated as the "average" behavior of all the known users/items.
 
 Likewise, the new category of one feature are also handled as an average embedding of the
-known categories of this feature. See `pure_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/pure_example.py>`_,
-`feat_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/feat_example.py>`_
+known categories of this feature. See `pure_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/pure_example.py>`_,
+`feat_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/feat_example.py>`_
 for cold-start usage.
 
 .. SEEALSO::
@@ -53,7 +53,7 @@ a user has appeared in training data, but his/her location doesn't exist in trai
 feature.
 
 On the other hand, user behavior sequences can also play a crucial role in recommender systems.
-So how do we handle these dynamic feature and sequence problems? Fortunately, LibRecommender can deal with them elegantly.
+So how do we handle these dynamic feature and sequence problems? Fortunately, Recora can deal with them elegantly.
 
 If you want to predict or recommend with specific features, the usage is pretty straightforward.
 For prediction, just pass the ``feats`` argument, which only accepts ``dict`` type:
@@ -64,7 +64,7 @@ For prediction, just pass the ``feats`` argument, which only accepts ``dict`` ty
 
 
 There is no need to specify a feature belongs to user or item, because this information
-has already been stored in model's :class:`~libreco.data.DataInfo` object. Note if you misspelled some feature names,
+has already been stored in model's :class:`~recora.data.DataInfo` object. Note if you misspelled some feature names,
 e.g. "sex" -> "sax", the model will simply ignore this feature. If you pass a feature category
 that doesn't appear in training data, e.g. "sex" -> "bisexual", then it will be ignored too.
 
@@ -81,7 +81,7 @@ and the models support sequence recommendations are ``RNN4Rec``, ``Caser``, ``Wa
 
 .. SeeAlso::
 
-    `seq_example.py <https://github.com/massquantity/LibRecommender/blob/master/examples/seq_example.py>`_
+    `seq_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/seq_example.py>`_
 
 .. error::
 

@@ -2,7 +2,7 @@ from io import StringIO
 
 import pandas as pd
 
-from libreco.data import (
+from recora.data import (
     random_split,
     split_by_num,
     split_by_num_chrono,

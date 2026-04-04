@@ -3,8 +3,8 @@ import sys
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import SVDpp
-from libreco.data import DatasetPure
+from recora.algorithms import SVDpp
+from recora.data import DatasetPure
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import SAVE_PATH, set_ranking_labels
 from tests.utils_metrics import get_metrics

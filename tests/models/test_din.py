@@ -7,8 +7,8 @@ import pytest
 import tensorflow as tf
 from numpy.testing import assert_array_equal
 
-from libreco.algorithms import DIN
-from libreco.data import DatasetFeat, split_by_ratio_chrono
+from recora.algorithms import DIN
+from recora.data import DatasetFeat, split_by_ratio_chrono
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import set_ranking_labels
 from tests.utils_metrics import get_metrics

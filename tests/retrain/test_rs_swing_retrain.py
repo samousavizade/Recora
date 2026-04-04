@@ -5,9 +5,9 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from libreco.algorithms import Swing
-from libreco.data import DataInfo, DatasetPure, split_by_ratio_chrono
-from libreco.evaluation import evaluate
+from recora.algorithms import Swing
+from recora.data import DataInfo, DatasetPure, split_by_ratio_chrono
+from recora.evaluation import evaluate
 from tests.utils_data import SAVE_PATH, remove_path
 from tests.utils_reco import ptest_recommends
 

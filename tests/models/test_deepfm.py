@@ -3,7 +3,7 @@ import sys
 import pytest
 import tensorflow as tf
 
-from libreco.algorithms import DeepFM
+from recora.algorithms import DeepFM
 from tests.models.utils_tf import ptest_tf_variables
 from tests.utils_data import set_ranking_labels
 from tests.utils_metrics import get_metrics

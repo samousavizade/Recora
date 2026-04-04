@@ -1,8 +1,10 @@
+import path_setup  # noqa: F401
+
 import pandas as pd
 
-from libreco.algorithms import RNN4Rec
-from libreco.data import DatasetPure, split_by_ratio_chrono
-from libreco.utils.misc import colorize
+from recora.algorithms import RNN4Rec
+from recora.data import DatasetPure, split_by_ratio_chrono
+from recora.utils.misc import colorize
 
 try:
     import nmslib  # noqa: F401

@@ -1,10 +1,10 @@
-package com.libreco.model
+package com.recora.model
 
 import org.apache.spark.sql.DataFrame
 import org.apache.spark.ml.recommendation.{ALS, ALSModel}
 import org.apache.spark.sql.functions.{coalesce, typedLit}
-import com.libreco.utils.Context
-import com.libreco.evaluate.EvalRecommender
+import com.recora.utils.Context
+import com.recora.evaluate.EvalRecommender
 
 import scala.collection.Map
 

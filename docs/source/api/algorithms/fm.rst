@@ -1,7 +1,7 @@
 FM
 --
 
-.. autoclass:: libreco.algorithms.FM
+.. autoclass:: recora.algorithms.FM
    :members:
    :inherited-members:
    :show-inheritance:
