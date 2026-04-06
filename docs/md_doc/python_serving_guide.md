@@ -104,7 +104,7 @@ $ curl -d '{"user": 1, "n_rec": 10}' -X POST http://127.0.0.1:8000/knn/recommend
 
 ## Embed-based model
 
-Embed-based models perform similarity searching on embeddings to make recommendation, so we only need to save a bunch of embeddings. This kind of model includes `SVD`, `SVD++`, `ALS`, `BPR`, `YouTubeRetrieval`, `RNN4Rec`, `Caser`, `WaveNet`, `TwoTower`.
+Embed-based models perform similarity searching on embeddings to make recommendation, so we only need to save a bunch of embeddings. This kind of model includes `SVD`, `SVD++`, `ALS`, `BPR`, `LightGCN`, `NGCF`, `YouTubeRetrieval`, `RNN4Rec`, `Caser`, `WaveNet`, `TwoTower`.
 
 In practice, to speed up serving, some ANN(Approximate Nearest Neighbors) libraries are often used to find similar embeddings. Here in `libserving`, we use [faiss](<https://github.com/facebookresearch/faiss>) to do such thing.
 
@@ -297,4 +297,3 @@ $ python request.py --user 1 --n_rec 10 --algo tf
 $ curl -d '{"user": 1, "n_rec": 10}' -X POST http://127.0.0.1:8000/tf/recommend
 # {'Recommend result for user 1': ['1196', '480', '260', '2028', '1198', '1214', '780', '1387', '1291', '1197']}
 ```
-

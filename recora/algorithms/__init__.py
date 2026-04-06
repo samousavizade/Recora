@@ -7,7 +7,9 @@ from .din import DIN
 from .fm import FM
 from .item_cf import ItemCF
 from .item_cf_rs import RsItemCF
+from .lightgcn import LightGCN
 from .ncf import NCF
+from .ngcf import NGCF
 from .rnn4rec import RNN4Rec
 from .sim import SIM
 from .svd import SVD
@@ -27,11 +29,13 @@ __all__ = [
     "RsUserCF",
     "ItemCF",
     "RsItemCF",
+    "LightGCN",
     "SVD",
     "SVDpp",
     "ALS",
     "BPR",
     "NCF",
+    "NGCF",
     "YouTubeRetrieval",
     "YouTubeRanking",
     "FM",

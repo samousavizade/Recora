@@ -14,6 +14,7 @@ from recora.algorithms import (
     ALS,
     DIN,
     FM,
+    LightGCN,
     NCF,
     ItemCF,
     RNN4Rec,
@@ -73,9 +74,20 @@ def knn_model(prepare_pure_data, request):
 
 
 @pytest.fixture
-def embed_model(prepare_pure_data):
+def embed_model(prepare_pure_data, request):
     _, train_data, _, data_info = prepare_pure_data
-    model = ALS("ranking", data_info, n_epochs=1, use_cg=False, reg=0.1)
+    model_name = getattr(request, "param", "ALS")
+    if model_name == "LightGCN":
+        model = LightGCN(
+            "ranking",
+            data_info,
+            embed_size=8,
+            n_layers=2,
+            n_epochs=1,
+            batch_size=128,
+        )
+    else:
+        model = ALS("ranking", data_info, n_epochs=1, use_cg=False, reg=0.1)
     model.fit(train_data, neg_sampling=True, verbose=2)
     return model
 

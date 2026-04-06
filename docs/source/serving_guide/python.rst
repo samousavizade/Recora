@@ -149,8 +149,8 @@ Embed-based Model
 
 Embed-based models perform similarity searching on embeddings to make recommendation,
 so we only need to save a bunch of embeddings. This kind of model includes
-``SVD``, ``SVD++``, ``ALS``, ``BPR``, ``YouTubeRetrieval``, ``RNN4Rec``, ``Caser``,
-``WaveNet``, ``TwoTower``.
+``SVD``, ``SVD++``, ``ALS``, ``BPR``, ``LightGCN``, ``NGCF``, ``YouTubeRetrieval``,
+``RNN4Rec``, ``Caser``, ``WaveNet``, ``TwoTower``.
 
 In practice, to speed up serving, some ANN(Approximate Nearest Neighbors) libraries
 are often used to find similar embeddings. Here in ``libserving``, we use

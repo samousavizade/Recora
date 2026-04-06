@@ -22,13 +22,13 @@ For example, using the `SVD` model with `rating` task:
 
 The implicit data typically may only contain positive feedback, i.e. only has samples that labeled as 1. In this case negative sampling is needed to effectively train a model. We'll cover negative sampling issue in the [section below](#negative-sampling).
 
-By the way, some models such as `BPR`, `YouTubeRetrieval`, `YouTubeRanking`, `RNN4Rec`, `Caser`, `WaveNet`, `Transformer` and `SIM` can only be used for `ranking` tasks since they are specially designed for that.
+By the way, some models such as `BPR`, `LightGCN`, `NGCF`, `YouTubeRetrieval`, `YouTubeRanking`, `RNN4Rec`, `Caser`, `WaveNet`, `Transformer` and `SIM` can only be used for `ranking` tasks since they are specially designed for that.
 
 
 
 ## `Pure` and `Feat` model
 
-Recora is a hybrid recommender system, which means you can choose whether to use features other than user behaviors or not. For models only use user behaviors, we classify them as `pure` models. This category includes `UserCF`, `ItemCF`, `SVD`, `SVD++`, `ALS`, `NCF`, `BPR`, `RNN4Rec`, `Caser`, `WaveNet`.
+Recora is a hybrid recommender system, which means you can choose whether to use features other than user behaviors or not. For models only use user behaviors, we classify them as `pure` models. This category includes `UserCF`, `ItemCF`, `SVD`, `SVD++`, `ALS`, `NCF`, `BPR`, `LightGCN`, `NGCF`, `RNN4Rec`, `Caser`, `WaveNet`.
 
 Then for models that can include other features (e.g., age, sex, name etc.), we call them `feat` models. This category includes `WideDeep`, `FM`, `DeepFM`, `YouTubeRetrieval`, `YouTubeRanking`, `AutoInt`, `DIN`, `TwoTower`, `Transformer`, `SIM`.
 
@@ -216,7 +216,7 @@ Recora provides some options on loss type for `ranking` task. The default loss t
 
 There are some special cases. Some algorithms are hard to assign explicit loss type, including `UserCF`, `ItemCF` and `ALS`, so they don't have `loss_type` parameter. Some algorithms can only use bpr loss, including `BPR`, so don't bother to choose loss for them either.
 
-The `YouTubeRetrieval` algorithm is also different, its `loss_type` is either `sampled_softmax` or `nce`. Finally, with `RNN4Rec` algorithm, one can choose three `loss_type`, i.e. `cross_entropy`, `focal`, `bpr`.
+The `YouTubeRetrieval` algorithm is also different, its `loss_type` is either `sampled_softmax` or `nce`. `LightGCN` and `NGCF` support `cross_entropy`, `focal`, `ranknet`, `bpr` and `lambdarank`, while `RNN4Rec` supports `cross_entropy`, `focal` and `bpr`.
 
 We are aware that these loss restrictions are hard to remember at once, so this leaves room for further improvement.
 
@@ -377,6 +377,4 @@ See [model_retrain_example.py](https://github.com/samousavizade/MyRec/blob/maste
 + `dropout_rate` : specify dropout rate.
 + `hidden_units` : specify number of layers and hidden units, typically comma-separated string, such as `"128,64,32"`.
 + `recent_num` : used in sequence models, specify number of recent items to consider.
-
-
 

@@ -7,7 +7,7 @@ Pure and Feat Models
 Recora is a hybrid recommender system, which means you can choose whether to use
 features other than user behaviors or not. For models only use user behaviors, we classify
 them as ``pure`` models. This category includes ``UserCF``, ``ItemCF``, ``SVD``, ``SVD++``,
-``ALS``, ``NCF``, ``BPR``, ``RNN4Rec``, ``Caser``, ``WaveNet``.
+``ALS``, ``NCF``, ``BPR``, ``LightGCN``, ``NGCF``, ``RNN4Rec``, ``Caser``, ``WaveNet``.
 
 Then for models that can use other features (e.g., age, sex, name etc.), we call
 them ``feat`` models. This category includes ``WideDeep``, ``FM``, ``DeepFM``, ``YouTubeRetrieval``,
@@ -74,6 +74,9 @@ The table below lists the losses and :ref:`negative samplers <negative-samplers>
 |                                   YouTubeRetrieval                                   |          sampled_softmax, nce         |             uniform, other             |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
 | SVD, SVD++, NCF, Wide&Deep, FM, DeepFM, YouTubeRanking, AutoInt, DIN, Caser, WaveNet |         cross_entropy, focal          |      random, unconsumed, popular       |
++--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
+|                                 LightGCN, NGCF                                      |   cross_entropy, focal, ranknet, bpr, |      random, unconsumed, popular       |
+|                                                                                      |              lambdarank               |                                        |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
 |                                       RNN4Rec                                        |       cross_entropy, focal, bpr       |      random, unconsumed, popular       |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+

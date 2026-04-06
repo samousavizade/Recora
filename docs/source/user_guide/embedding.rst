@@ -3,6 +3,7 @@ Embedding
 
 According to the `algorithm list <https://github.com/samousavizade/MyRec#references>`_,
 there are some algorithms that can generate user and item embeddings after training.
+This includes collaborative graph models such as ``LightGCN`` and ``NGCF``.
 So Recora provides public APIs to get them:
 
 .. code-block:: python3
@@ -51,4 +52,3 @@ This can be useful in the cold-start scenario, so Recora provides API for dynami
 .. SeeAlso::
 
    `knn_embedding_example.py <https://github.com/samousavizade/MyRec/blob/master/examples/knn_embedding_example.py>`_
-

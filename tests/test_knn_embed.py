@@ -2,7 +2,7 @@ import sys
 
 import pytest
 
-from recora.algorithms import ALS, BPR, RNN4Rec
+from recora.algorithms import ALS, BPR, LightGCN, NGCF, RNN4Rec
 from tests.utils_data import set_ranking_labels
 
 
@@ -34,6 +34,30 @@ def test_knn_embed(pure_data_small, monkeypatch):
     bpr.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
     ptest_knn(bpr, pd_data)
 
+    lightgcn = LightGCN(
+        "ranking",
+        data_info,
+        embed_size=8,
+        n_layers=2,
+        n_epochs=1,
+        lr=1e-4,
+        batch_size=20,
+    )
+    lightgcn.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
+    ptest_knn(lightgcn, pd_data)
+
+    ngcf = NGCF(
+        "ranking",
+        data_info,
+        embed_size=8,
+        layer_sizes=(8, 4),
+        n_epochs=1,
+        lr=1e-4,
+        batch_size=20,
+    )
+    ngcf.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
+    ptest_knn(ngcf, pd_data)
+
     with pytest.raises(ValueError):
         bpr.get_user_id(-1)
     with pytest.raises(ValueError):
@@ -48,9 +72,9 @@ def test_knn_embed(pure_data_small, monkeypatch):
 
 def ptest_knn(model, pd_data):
     assert model.get_user_embedding().shape[0] == model.n_users
-    assert model.get_user_embedding().shape[1] == model.embed_size
+    assert model.get_user_embedding().shape[1] == model.embedding_dim
     assert model.get_item_embedding().shape[0] == model.n_items
-    assert model.get_item_embedding().shape[1] == model.embed_size
+    assert model.get_item_embedding().shape[1] == model.embedding_dim
     with pytest.raises(ValueError):
         model.init_knn(approximate=True, sim_type="whatever")
 

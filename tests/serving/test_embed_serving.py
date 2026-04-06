@@ -1,10 +1,13 @@
 import subprocess
 from pathlib import Path
 
+import pytest
+
 from libserving.serialization import embed2redis, save_embed, save_faiss_index
 from tests.utils_data import SAVE_PATH, remove_path
 
 
+@pytest.mark.parametrize("embed_model", ["ALS", "LightGCN"], indirect=True)
 def test_embed_serving(embed_model, session, close_server):
     save_embed(SAVE_PATH, embed_model)
     embed2redis(SAVE_PATH)

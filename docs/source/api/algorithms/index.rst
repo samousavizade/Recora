@@ -9,11 +9,13 @@ Algorithms
    user_cf_rs
    item_cf
    item_cf_rs
+   lightgcn
    svd
    svdpp
    als
    ncf
    bpr
+   ngcf
    wide_deep
    fm
    deepfm

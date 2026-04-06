@@ -43,6 +43,7 @@ class EmbedBase(Base):
         self.user_embeds_np = None
         self.item_embeds_np = None
         self.embed_size = embed_size
+        self.embedding_dim = embed_size
         self.num_threads = os.cpu_count()
         self.trainer = None
         self.user_index = None
@@ -365,7 +366,7 @@ class EmbedBase(Base):
         user_embeds = (
             self.user_embeds_np[:-1]
             if include_bias
-            else self.user_embeds_np[:-1, : self.embed_size]
+            else self.user_embeds_np[:-1, : self.embedding_dim]
         )
         if user is None:
             return user_embeds
@@ -401,7 +402,7 @@ class EmbedBase(Base):
         item_embeds = (
             self.item_embeds_np[:-1]
             if include_bias
-            else self.item_embeds_np[:-1, : self.embed_size]
+            else self.item_embeds_np[:-1, : self.embedding_dim]
         )
         if item is None:
             return item_embeds
