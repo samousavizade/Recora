@@ -51,6 +51,7 @@ class PointwiseBatch:
         "users",
         "items",
         "labels",
+        "sample_weights",
         "sparse_indices",
         "dense_values",
         "seqs",
@@ -59,6 +60,7 @@ class PointwiseBatch:
     users: Iterable[int]
     items: Iterable[int]
     labels: Iterable[float]
+    sample_weights: Iterable[float]
     sparse_indices: Optional[Iterable[int]]
     dense_values: Optional[Iterable[float]]
     seqs: Optional[SeqFeats]
@@ -80,6 +82,7 @@ class PairwiseBatch:
     __slots__ = (
         "queries",
         "item_pairs",
+        "sample_weights",
         "sparse_indices",
         "dense_values",
         "seqs",
@@ -87,6 +90,7 @@ class PairwiseBatch:
 
     queries: Iterable[int]
     item_pairs: Tuple[Iterable[int], Iterable[int]]
+    sample_weights: Iterable[float]
     sparse_indices: Optional[TripleFeats[int]]
     dense_values: Optional[TripleFeats[float]]
     seqs: Optional[SeqFeats]
@@ -96,5 +100,6 @@ class PairwiseBatch:
 class SparseBatch:
     seqs: SparseSeqFeats
     items: Iterable[int]
+    sample_weights: Iterable[float]
     sparse_indices: Optional[Iterable[int]]
     dense_values: Optional[Iterable[float]]

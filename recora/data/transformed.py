@@ -24,6 +24,8 @@ class TransformedSet:
         All item rows in data, represented in inner id.
     labels : numpy.ndarray
         All labels in data.
+    sample_weights : numpy.ndarray or None, default: None
+        Per-sample weights used only during training loss computation.
     sparse_indices : numpy.ndarray or None, default: None
         All sparse rows in data, represented in inner id.
     dense_values : numpy.ndarray or None, default: None
@@ -40,12 +42,20 @@ class TransformedSet:
         user_indices=None,
         item_indices=None,
         labels=None,
+        sample_weights=None,
         sparse_indices=None,
         dense_values=None,
     ):
         self._user_indices = user_indices
         self._item_indices = item_indices
         self._labels = labels
+        if labels is not None and sample_weights is None:
+            sample_weights = np.ones(len(labels), dtype=np.float32)
+        self._sample_weights = (
+            np.asarray(sample_weights, dtype=np.float32)
+            if sample_weights is not None
+            else None
+        )
         self._sparse_indices = sparse_indices
         self._dense_values = dense_values
         self._sparse_interaction = self.construct_sparse()
@@ -91,6 +101,11 @@ class TransformedSet:
     def labels(self):
         """All labels in data"""
         return self._labels
+
+    @property
+    def sample_weights(self):
+        """All sample weights in data"""
+        return self._sample_weights
 
     @property
     def sparse_interaction(self):

@@ -30,6 +30,8 @@ def _sparse_feed_dict(model, data: SparseBatch, is_training):
         model.item_indices: data.items,
         model.is_training: is_training,
     }
+    if hasattr(model, "sample_weights"):
+        feed_dict.update({model.sample_weights: data.sample_weights})
     if hasattr(model, "user_sparse") and model.user_sparse:
         feed_dict.update({model.user_sparse_indices: data.sparse_indices})
     if hasattr(model, "user_dense") and model.user_dense:
@@ -83,6 +85,8 @@ def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
         )
     if hasattr(model, "is_training"):
         feed_dict.update({model.is_training: is_training})
+    if hasattr(model, "sample_weights"):
+        feed_dict.update({model.sample_weights: data.sample_weights})
     return feed_dict
 
 
@@ -94,6 +98,8 @@ def _pointwise_feed_dict(model, data: PointwiseBatch, is_training):
         feed_dict.update({model.item_indices: data.items})
     if hasattr(model, "labels"):
         feed_dict.update({model.labels: data.labels})
+    if hasattr(model, "sample_weights"):
+        feed_dict.update({model.sample_weights: data.sample_weights})
     if hasattr(model, "is_training"):
         feed_dict.update({model.is_training: is_training})
     if hasattr(model, "sparse") and model.sparse:
@@ -118,6 +124,8 @@ def _separate_feed_dict(model, data: PointwiseSepFeatBatch, is_training):
     }
     if hasattr(model, "labels"):
         feed_dict.update({model.labels: data.labels})
+    if hasattr(model, "sample_weights"):
+        feed_dict.update({model.sample_weights: data.sample_weights})
     if hasattr(model, "correction"):
         feed_dict.update({model.correction: model.item_corrections[data.items]})
     if model.user_sparse:
@@ -145,6 +153,8 @@ def _dual_seq_feed_dict(model, data: PointwiseDualSeqBatch, is_training):
         model.short_seqs: data.seqs.short_seq,
         model.short_seq_lens: data.seqs.short_len,
     }
+    if hasattr(model, "sample_weights"):
+        feed_dict.update({model.sample_weights: data.sample_weights})
     if hasattr(model, "sparse") and model.sparse:
         feed_dict.update({model.sparse_indices: data.sparse_indices})
     if hasattr(model, "dense") and model.dense:

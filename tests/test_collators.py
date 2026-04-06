@@ -42,6 +42,7 @@ user,item,label,time,sex,age,occupation,genre1,genre2,genre3
 def config_feat_data(request):
     pd_data = pd.read_csv(StringIO(raw_data), sep=",", header=0)
     pd_data["item_dense_col"] = np.random.default_rng(42).random(len(pd_data))
+    pd_data["sample_weight"] = np.arange(1, len(pd_data) + 1, dtype=np.float32)
     train_data, data_info = DatasetFeat.build_trainset(
         train_data=pd_data, **request.param
     )
@@ -83,6 +84,7 @@ def test_normal_collator(config_feat_data):
     normal_batch = normal_collator(original_data)
     assert isinstance(normal_batch, PointwiseBatch)
     assert len(normal_batch.labels) == 3
+    assert np.array_equal(normal_batch.sample_weights, train_data.sample_weights[[11, 7, 2]])
     assert isinstance(normal_batch.items, np.ndarray)
     if normal_batch.sparse_indices is not None:
         assert isinstance(normal_batch.sparse_indices, np.ndarray)
@@ -103,6 +105,7 @@ def test_normal_collator(config_feat_data):
     sep_batch = sep_collator(original_data)
     assert isinstance(sep_batch, PointwiseSepFeatBatch)
     assert len(sep_batch.labels) == 3
+    assert np.array_equal(sep_batch.sample_weights, train_data.sample_weights[[11, 7, 2]])
     if sep_batch.sparse_indices is not None:
         assert isinstance(sep_batch.sparse_indices, PairFeats)
     user_sparse_len = len(data_info.user_sparse_col.index)
@@ -152,6 +155,7 @@ def test_sparse_collator(config_feat_data):
     batch = collator(original_data)
     assert isinstance(batch, SparseBatch)
     assert len(batch.items) == 3
+    assert np.array_equal(batch.sample_weights, train_data.sample_weights[[11, 7, 2]])
     assert isinstance(batch.items, np.ndarray)
     if batch.sparse_indices is not None:
         assert isinstance(batch.sparse_indices, np.ndarray)
@@ -194,6 +198,9 @@ def test_pointwise_collator(config_feat_data):
     batch = collator(original_data)
     assert isinstance(batch, PointwiseBatch)
     assert len(batch.users) == len(batch.items) == len(batch.labels) == 9
+    assert np.array_equal(
+        batch.sample_weights, np.repeat(train_data.sample_weights[[11, 7, 2]], 3)
+    )
     assert isinstance(batch.items, np.ndarray)
     assert np.all(batch.labels[0::3] == 1.0)
     assert np.all(batch.labels[1::3] == 0.0)
@@ -240,6 +247,9 @@ def test_pairwise_sequence_collator(config_feat_data):
     assert isinstance(batch, PairwiseBatch)
     assert len(batch.queries) == 6
     assert len(batch.item_pairs[0]) == len(batch.item_pairs[1]) == 6
+    assert np.array_equal(
+        batch.sample_weights, np.repeat(train_data.sample_weights[[11, 7, 2]], 2)
+    )
     assert isinstance(batch.queries, np.ndarray)
     assert np.all(batch.queries[:2] == batch.queries[0])
     assert np.all(batch.item_pairs[0][:2] == batch.item_pairs[0][:1])
@@ -280,6 +290,9 @@ def test_pairwise_separate_features_collator(config_feat_data):
     batch = collator(original_data)
     assert isinstance(batch, PairwiseBatch)
     assert len(batch.queries) == len(batch.item_pairs[0]) == len(batch.item_pairs[1]) == 9
+    assert np.array_equal(
+        batch.sample_weights, np.repeat(train_data.sample_weights[[11, 7, 2]], 3)
+    )
     assert isinstance(batch.queries, np.ndarray)
     assert batch.seqs is None
     assert isinstance(batch.sparse_indices, TripleFeats) or batch.sparse_indices is None

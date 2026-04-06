@@ -6,6 +6,7 @@ from ..batch import get_batch_loader, get_tf_feeds
 from ..evaluation import print_metrics
 from ..layers import normalize_embeds
 from ..tfops import choose_tf_loss, lr_decay_config, tf, var_list_by_name
+from ..tfops.loss import weighted_mean
 from ..utils.constants import EmbeddingModels
 from ..utils.misc import colorize, time_block
 
@@ -41,6 +42,7 @@ class TensorFlowTrainer(BaseTrainer):
         self.sess = model.sess
         self.use_reg = self._check_reg()
         self._check_params()
+        self._ensure_sample_weights()
         self._build_train_ops(*args, **kwargs)
 
     def run(
@@ -123,6 +125,12 @@ class TensorFlowTrainer(BaseTrainer):
         self.training_op = tf.group([optimizer_op, update_ops])
         self.sess.run(tf.global_variables_initializer())
 
+    def _ensure_sample_weights(self):
+        if not hasattr(self.model, "sample_weights"):
+            self.model.sample_weights = tf.placeholder(
+                tf.float32, shape=[None], name="sample_weights"
+            )
+
     def _check_reg(self):
         if hasattr(self.model, "reg") and self.model.reg is not None:
             return True
@@ -183,7 +191,7 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
 
         user_embeds, item_embeds, item_biases = self._get_loss_inputs()
         if self.loss_type == "nce":
-            self.loss = tf.reduce_mean(
+            self.loss = weighted_mean(
                 tf.nn.nce_loss(
                     weights=item_embeds,
                     biases=item_biases,
@@ -195,10 +203,11 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
                     sampled_values=sampled_values,
                     remove_accidental_hits=True,
                     partition_strategy="div",
-                )
+                ),
+                self.model.sample_weights,
             )
         elif self.loss_type == "sampled_softmax":
-            self.loss = tf.reduce_mean(
+            self.loss = weighted_mean(
                 tf.nn.sampled_softmax_loss(
                     weights=item_embeds,
                     biases=item_biases,
@@ -211,7 +220,8 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
                     remove_accidental_hits=True,
                     seed=self.model.seed,
                     partition_strategy="div",
-                )
+                ),
+                self.model.sample_weights,
             )
         else:
             raise ValueError("Loss type must either be `nce` or `sampled_softmax`")

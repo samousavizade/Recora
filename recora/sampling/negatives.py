@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-
+    
 def _check_invalid_negatives(negatives, items_pos, items=None):
     if items is not None and len(items) > 0:
         invalid_indices = np.union1d(

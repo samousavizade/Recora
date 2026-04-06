@@ -15,6 +15,7 @@ class BatchData:
         self.user_indices = data.user_indices
         self.item_indices = data.item_indices
         self.labels = data.labels
+        self.sample_weights = data.sample_weights
         self.sparse_indices = data.sparse_indices
         self.dense_values = data.dense_values
         self.use_features = use_features
@@ -24,6 +25,7 @@ class BatchData:
             "user": self.user_indices[idx],
             "item": self.item_indices[idx],
             "label": self.labels[idx],
+            "sample_weight": self.sample_weights[idx],
         }
         if self.use_features and self.sparse_indices is not None:
             batch["sparse"] = self.sparse_indices[idx]

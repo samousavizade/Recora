@@ -216,6 +216,7 @@ class DatasetPure(_Dataset):
         ----------
         train_data : pandas.DataFrame
             Data must contain at least three columns, i.e. ``user``, ``item``, ``label``.
+            It may also contain optional ``sample_weight`` values for training.
         shuffle : bool, default: False
             Whether to fully shuffle data.
 
@@ -274,6 +275,7 @@ class DatasetPure(_Dataset):
         ----------
         train_data : pandas.DataFrame
             Data must contain at least three columns, i.e. ``user``, ``item``, ``label``.
+            It may also contain optional ``sample_weight`` values for training.
         data_info : DataInfo
             Object that contains past data information.
         merge_behavior : bool, default: True
@@ -407,6 +409,7 @@ class DatasetFeat(_Dataset):
         ----------
         train_data : pandas.DataFrame
             Data must contain at least three columns, i.e. ``user``, ``item``, ``label``.
+            It may also contain optional ``sample_weight`` values for training.
         user_col : list of str or None, default: None
             List of user feature column names.
         item_col : list of str or None, default: None
@@ -560,6 +563,7 @@ class DatasetFeat(_Dataset):
         ----------
         train_data : pandas.DataFrame
             Data must contain at least three columns, i.e. ``user``, ``item``, ``label``.
+            It may also contain optional ``sample_weight`` values for training.
         data_info : DataInfo
             Object that contains past data information.
         merge_behavior : bool, default: True
@@ -720,6 +724,7 @@ def _build_transformed_set(
         is_train,
         is_ordered,
     )
+    sample_weights = _extract_sample_weights(data) if is_train else None
     if "label" in data.columns:
         labels = data["label"].to_numpy(dtype=np.float32)
     else:
@@ -727,10 +732,17 @@ def _build_transformed_set(
         labels = np.zeros(len(data), dtype=np.float32)
 
     if has_feats:
+        if is_train:
+            return user_indices, item_indices, labels, sample_weights
         return user_indices, item_indices, labels
 
     if is_train:
-        transformed_data = TransformedSet(user_indices, item_indices, labels)
+        transformed_data = TransformedSet(
+            user_indices,
+            item_indices,
+            labels,
+            sample_weights=sample_weights,
+        )
         return transformed_data, user_indices, item_indices
     else:
         return TransformedEvalSet(user_indices, item_indices, labels)
@@ -744,17 +756,25 @@ def _build_transformed_set_feat(
     is_ordered,
     data_info=None,
 ):
-    user_indices, item_indices, labels = _build_transformed_set(
+    if not is_train:
+        user_indices, item_indices, labels = _build_transformed_set(
+            data, user_unique_vals, item_unique_vals, is_train, is_ordered, has_feats=True
+        )
+        return TransformedEvalSet(user_indices, item_indices, labels)
+    user_indices, item_indices, labels, sample_weights = _build_transformed_set(
         data, user_unique_vals, item_unique_vals, is_train, is_ordered, has_feats=True
     )
-    if not is_train:
-        return TransformedEvalSet(user_indices, item_indices, labels)
 
     sparse_indices, dense_values, sparse_cols, multi_sparse_cols = _build_features(
         data, is_train, is_ordered, data_info
     )
     transformed_data = TransformedSet(
-        user_indices, item_indices, labels, sparse_indices, dense_values
+        user_indices,
+        item_indices,
+        labels,
+        sample_weights=sample_weights,
+        sparse_indices=sparse_indices,
+        dense_values=dense_values,
     )
 
     pure_data = transformed_data, user_indices, item_indices
@@ -789,3 +809,19 @@ def _build_features(data, is_train, is_ordered, data_info):
     if dense_cols:
         dense_values = data[dense_cols].to_numpy(dtype=np.float32)
     return sparse_indices, dense_values, sparse_cols, multi_sparse_cols
+
+
+def _extract_sample_weights(data):
+    if "sample_weight" not in data.columns:
+        return np.ones(len(data), dtype=np.float32)
+
+    try:
+        sample_weights = data["sample_weight"].to_numpy(dtype=np.float32)
+    except (TypeError, ValueError) as e:
+        raise ValueError("`sample_weight` must contain numeric values") from e
+
+    if not np.all(np.isfinite(sample_weights)):
+        raise ValueError("`sample_weight` must contain finite values")
+    if np.any(sample_weights < 0.0):
+        raise ValueError("`sample_weight` must be non-negative")
+    return sample_weights

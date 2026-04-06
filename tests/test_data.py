@@ -86,6 +86,7 @@ def test_dataset_pure(pure_train_data):
 
     assert isinstance(data, TransformedSet)
     assert isinstance(data_info, DataInfo)
+    assert_array_equal(data.sample_weights, np.ones(len(data), dtype=np.float32))
     with pytest.raises(IndexError):
         assert len(data) == 10
         _ = data[11]
@@ -107,6 +108,7 @@ def test_dataset_feat(feat_train_data):
     assert isinstance(data, TransformedSet)
     assert isinstance(data.sparse_interaction, csr_matrix)
     assert isinstance(data_info, DataInfo)
+    assert_array_equal(data.sample_weights, np.ones(len(data), dtype=np.float32))
     assert len(data_info.col_name_mapping["sparse_col"]) == 5
     assert len(data_info.col_name_mapping["dense_col"]) == 1
     assert len(data_info.col_name_mapping["user_sparse_col"]) == 2
@@ -129,6 +131,52 @@ def test_dataset_feat(feat_train_data):
     DatasetFeat.build_trainset(
         pd_data, user_col, item_col, sparse_col, dense_col, shuffle=True
     )
+
+
+def test_train_sample_weights():
+    sample_weights = np.linspace(0.0, 0.9, len(pd_data), dtype=np.float32)
+    weighted_data = pd_data.copy()
+    weighted_data["sample_weight"] = sample_weights
+
+    pure_data, pure_info = DatasetPure.build_trainset(weighted_data, shuffle=False)
+    merged_pure_data, _ = DatasetPure.merge_trainset(
+        weighted_data, pure_info, merge_behavior=False, shuffle=False
+    )
+    assert_array_equal(pure_data.sample_weights, sample_weights)
+    assert_array_equal(merged_pure_data.sample_weights, sample_weights)
+    assert "sample_weight" not in pure_info.interaction_data.columns
+
+    feat_data, feat_info = DatasetFeat.build_trainset(
+        weighted_data,
+        user_col,
+        item_col,
+        sparse_col,
+        dense_col,
+        shuffle=False,
+    )
+    merged_feat_data, _ = DatasetFeat.merge_trainset(
+        weighted_data, feat_info, merge_behavior=False, shuffle=False
+    )
+    assert_array_equal(feat_data.sample_weights, sample_weights)
+    assert_array_equal(merged_feat_data.sample_weights, sample_weights)
+    assert "sample_weight" not in feat_info.interaction_data.columns
+    assert "sample_weight" not in feat_info.col_name_mapping["sparse_col"]
+    assert "sample_weight" not in feat_info.col_name_mapping["dense_col"]
+
+
+@pytest.mark.parametrize(
+    "sample_weights, error",
+    [
+        (["bad"] * len(pd_data), "numeric"),
+        ([np.inf] + [1.0] * (len(pd_data) - 1), "finite"),
+        ([-1.0] + [1.0] * (len(pd_data) - 1), "non-negative"),
+    ],
+)
+def test_invalid_sample_weights(sample_weights, error):
+    weighted_data = pd_data.copy()
+    weighted_data["sample_weight"] = sample_weights
+    with pytest.raises(ValueError, match=error):
+        DatasetPure.build_trainset(weighted_data, shuffle=False)
 
 
 def test_data_info(feat_train_data):

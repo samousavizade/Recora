@@ -9,7 +9,7 @@
             "/openmp"
         ],
         "include_dirs": [
-            "C:\\Users\\PC\\AppData\\Local\\Temp\\pip-build-env-0o2v4em6\\overlay\\Lib\\site-packages\\numpy\\_core\\include"
+            "C:\\Users\\PC\\AppData\\Local\\Temp\\pip-build-env-veybqao0\\overlay\\Lib\\site-packages\\numpy\\_core\\include"
         ],
         "language": "c++",
         "name": "recora.algorithms._bpr",

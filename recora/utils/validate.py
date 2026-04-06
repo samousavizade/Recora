@@ -1,6 +1,7 @@
 import numpy as np
 
 from ..utils.misc import colorize
+from .constants import TfTrainModels
 
 
 def check_unknown(model, user, item):
@@ -110,6 +111,7 @@ def check_multi_sparse(data_info, multi_sparse_combiner):
 def check_fitting(model, train_data, eval_data, neg_sampling, k):
     check_neg_sampling(model, neg_sampling)
     check_labels(model, train_data.labels, neg_sampling)
+    check_sample_weight_support(model, train_data)
     check_retrain_loaded_model(model)
     check_eval(eval_data, k, model.n_items)
 
@@ -155,6 +157,18 @@ def check_retrain_loaded_model(model):
 def check_eval(eval_data, k, n_items):
     if eval_data is not None and k > n_items:
         raise ValueError(f"eval `k` {k} exceeds num of items {n_items}")
+
+
+def check_sample_weight_support(model, train_data):
+    sample_weights = getattr(train_data, "sample_weights", None)
+    if sample_weights is None or not np.any(sample_weights != 1.0):
+        return
+    if TfTrainModels.contains(model.model_name) and getattr(model, "use_tf", True):
+        return
+    raise ValueError(
+        "`sample_weight` is only supported for TensorFlow-backed training. "
+        "Remove the column or keep all values at 1.0 for this model/backend."
+    )
 
 
 def is_listwise_training(model):

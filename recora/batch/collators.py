@@ -70,6 +70,7 @@ class BaseCollator:
             users=batch["user"],
             items=batch["item"],
             labels=batch["label"],
+            sample_weights=batch["sample_weight"],
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
@@ -180,6 +181,7 @@ class SparseCollator(BaseCollator):
         return SparseBatch(
             seqs=seq_batch,
             items=batch["item"],
+            sample_weights=batch["sample_weight"],
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
         )
@@ -208,6 +210,7 @@ class PointwiseCollator(BaseCollator):
         user_batch = np.repeat(batch["user"], self.num_neg + 1)
         item_batch = np.repeat(batch["item"], self.num_neg + 1)
         label_batch = np.zeros_like(item_batch, dtype=np.float32)
+        sample_weight_batch = np.repeat(batch["sample_weight"], self.num_neg + 1)
         label_batch[:: (self.num_neg + 1)] = 1.0
         items_neg = self.sample_neg_items(batch, self.sampler, self.num_neg)
         for i in range(self.num_neg):
@@ -226,6 +229,7 @@ class PointwiseCollator(BaseCollator):
             users=user_batch,
             items=item_batch,
             labels=label_batch,
+            sample_weights=sample_weight_batch,
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
@@ -258,9 +262,11 @@ class PairwiseCollator(BaseCollator):
         if self.repeat_positives and self.num_neg > 1:
             users = np.repeat(batch["user"], self.num_neg)
             items_pos = np.repeat(batch["item"], self.num_neg)
+            sample_weights = np.repeat(batch["sample_weight"], self.num_neg)
         else:
             users = batch["user"]
             items_pos = batch["item"]
+            sample_weights = batch["sample_weight"]
         items_neg = self.sample_neg_items(batch, self.sampler, self.num_neg)
 
         sparse_batch = self.get_pairwise_feats(batch, FeatType.SPARSE, items_neg)
@@ -271,6 +277,7 @@ class PairwiseCollator(BaseCollator):
         return PairwiseBatch(
             queries=users,
             item_pairs=(items_pos, items_neg),
+            sample_weights=sample_weights,
             sparse_indices=sparse_batch,
             dense_values=dense_batch,
             seqs=seq_batch,
