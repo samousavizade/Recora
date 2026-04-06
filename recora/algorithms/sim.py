@@ -38,7 +38,7 @@ class SIM(TfBase, metaclass=ModelMeta):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'focal'}, default: 'cross_entropy'
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr'}, default: 'cross_entropy'
         Loss for model training.
     embed_size: int, default: 16
         Vector size of embeddings.
@@ -186,7 +186,12 @@ class SIM(TfBase, metaclass=ModelMeta):
         assert 0.0 <= self.beta <= 1.0
         assert self.short_max_len > 0
         assert self.long_max_len >= self.search_topk > 0
-        if self.task == "ranking" and self.loss_type not in ("cross_entropy", "focal"):
+        if self.task == "ranking" and self.loss_type not in (
+            "cross_entropy",
+            "focal",
+            "ranknet",
+            "bpr",
+        ):
             raise ValueError(f"unsupported `loss_type`: {self.loss_type}")
 
     def build_model(self):

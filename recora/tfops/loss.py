@@ -1,11 +1,23 @@
 from .version import tf
 
 
+def maybe_build_pairwise_scores(model, loss_type):
+    if loss_type not in ("bpr", "ranknet"):
+        return
+    if hasattr(model, "pairwise_logits") or not hasattr(model, "output"):
+        return
+    split_index = tf.shape(model.output)[0] // 2
+    model.output_pos = model.output[:split_index]
+    model.output_neg = model.output[split_index:]
+    model.pairwise_logits = model.output_pos - model.output_neg
+
+
 def choose_tf_loss(model, task, loss_type):
     if task == "rating":
         per_example_loss = tf.math.squared_difference(model.labels, model.output)
         loss = weighted_mean(per_example_loss, get_sample_weights(model, per_example_loss))
     else:
+        maybe_build_pairwise_scores(model, loss_type)
         if loss_type == "cross_entropy":
             assert hasattr(model, "output"), (
                 f"Binary cross entropy loss is unavailable in `{model.model_name}`"
@@ -16,11 +28,25 @@ def choose_tf_loss(model, task, loss_type):
             loss = weighted_mean(
                 per_example_loss, get_sample_weights(model, per_example_loss)
             )
-        elif loss_type == "bpr":
-            assert hasattr(model, "bpr_loss"), (
-                f"Bpr loss is unavailable in {model.model_name}"
+        elif loss_type == "ranknet":
+            assert hasattr(model, "pairwise_logits"), (
+                f"RankNet loss is unavailable in `{model.model_name}`"
             )  # fmt: skip
-            per_example_loss = -model.bpr_loss
+            per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(
+                labels=tf.ones_like(model.pairwise_logits),
+                logits=model.pairwise_logits,
+            )
+            loss = weighted_mean(
+                per_example_loss, get_sample_weights(model, per_example_loss)
+            )
+        elif loss_type == "bpr":
+            if hasattr(model, "pairwise_logits"):
+                per_example_loss = -tf.math.log_sigmoid(model.pairwise_logits)
+            else:
+                assert hasattr(model, "bpr_loss"), (
+                    f"Bpr loss is unavailable in {model.model_name}"
+                )  # fmt: skip
+                per_example_loss = -model.bpr_loss
             loss = weighted_mean(
                 per_example_loss, get_sample_weights(model, per_example_loss)
             )

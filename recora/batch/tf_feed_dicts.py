@@ -1,10 +1,14 @@
+import numpy as np
+
 from .batch_unit import (
+    DualSeqFeats,
     PairwiseBatch,
     PointwiseBatch,
     PointwiseDualSeqBatch,
     PointwiseSepFeatBatch,
     SparseBatch,
 )
+from .collators import merge_columns
 from ..feature.ssl import get_ssl_features
 from ..utils.constants import SequenceModels
 
@@ -79,9 +83,12 @@ def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
             feed_dict.update(
                 {model.item_dense_values_neg: data.dense_values.item_neg_feats}
             )
+    elif getattr(model, "loss_type", None) in ("bpr", "ranknet"):
+        feed_dict = _generic_pairwise_feed_dict(model, data)
     else:
         raise ValueError(
-            "Only `BPR`, `RNN4Rec` and `TwoTower` use pairwise loss in tf models"
+            "Unsupported pairwise tf model. Expected legacy pairwise model or "
+            "a model exposing `pairwise_logits`."
         )
     if hasattr(model, "is_training"):
         feed_dict.update({model.is_training: is_training})
@@ -160,3 +167,89 @@ def _dual_seq_feed_dict(model, data: PointwiseDualSeqBatch, is_training):
     if hasattr(model, "dense") and model.dense:
         feed_dict.update({model.dense_values: data.dense_values})
     return feed_dict
+
+
+def _generic_pairwise_feed_dict(model, data: PairwiseBatch):
+    queries = np.concatenate([data.queries, data.queries], axis=0)
+    items = np.concatenate(data.item_pairs, axis=0)
+    feed_dict = {
+        model.user_indices: queries,
+        model.item_indices: items,
+    }
+
+    if getattr(model, "sparse", False):
+        sparse_pos, sparse_neg = _merge_pairwise_features(
+            data.sparse_indices,
+            model.data_info.user_sparse_col.index,
+            model.data_info.item_sparse_col.index,
+        )
+        if sparse_pos is not None:
+            feed_dict[model.sparse_indices] = np.concatenate(
+                [sparse_pos, sparse_neg], axis=0
+            )
+
+    if getattr(model, "dense", False):
+        dense_pos, dense_neg = _merge_pairwise_features(
+            data.dense_values,
+            model.data_info.user_dense_col.index,
+            model.data_info.item_dense_col.index,
+        )
+        if dense_pos is not None:
+            feed_dict[model.dense_values] = np.concatenate([dense_pos, dense_neg], axis=0)
+
+    if data.seqs is not None:
+        if isinstance(data.seqs, DualSeqFeats):
+            feed_dict.update(
+                {
+                    model.long_seqs: np.concatenate(
+                        [data.seqs.long_seq, data.seqs.long_seq], axis=0
+                    ),
+                    model.long_seq_lens: np.concatenate(
+                        [data.seqs.long_len, data.seqs.long_len], axis=0
+                    ),
+                    model.short_seqs: np.concatenate(
+                        [data.seqs.short_seq, data.seqs.short_seq], axis=0
+                    ),
+                    model.short_seq_lens: np.concatenate(
+                        [data.seqs.short_len, data.seqs.short_len], axis=0
+                    ),
+                }
+            )
+        elif SequenceModels.contains(model.model_name):
+            feed_dict.update(
+                {
+                    model.user_interacted_seq: np.concatenate(
+                        [data.seqs.interacted_seq, data.seqs.interacted_seq], axis=0
+                    ),
+                    model.user_interacted_len: np.concatenate(
+                        [data.seqs.interacted_len, data.seqs.interacted_len], axis=0
+                    ),
+                }
+            )
+    return feed_dict
+
+
+def _merge_pairwise_features(triple_feats, user_col_index, item_col_index):
+    if triple_feats is None:
+        return None, None
+    pos_feats = _merge_features(
+        triple_feats.query_feats,
+        triple_feats.item_pos_feats,
+        user_col_index,
+        item_col_index,
+    )
+    neg_feats = _merge_features(
+        triple_feats.query_feats,
+        triple_feats.item_neg_feats,
+        user_col_index,
+        item_col_index,
+    )
+    return pos_feats, neg_feats
+
+
+def _merge_features(user_features, item_features, user_col_index, item_col_index):
+    if user_features is not None and item_features is not None:
+        return merge_columns(user_features, item_features, user_col_index, item_col_index)
+    if user_features is not None:
+        return user_features
+    return item_features

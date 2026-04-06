@@ -76,6 +76,45 @@ def test_choose_tf_loss_weighted_bpr():
     assert loss == pytest.approx(np.log(2.0))
 
 
+def test_choose_tf_loss_weighted_generic_bpr():
+    tf.reset_default_graph()
+    model = SimpleNamespace(
+        model_name="Dummy",
+        output=tf.constant([0.0, 0.0, 0.0, 0.0], dtype=tf.float32),
+        sample_weights=tf.constant([3.0, 0.0], dtype=tf.float32),
+    )
+
+    with tf.Session() as sess:
+        loss = sess.run(choose_tf_loss(model, "ranking", "bpr"))
+
+    assert loss == pytest.approx(np.log(2.0))
+
+
+def test_choose_tf_loss_weighted_ranknet_and_zero_weights():
+    tf.reset_default_graph()
+    weighted_model = SimpleNamespace(
+        model_name="Dummy",
+        output=tf.constant([0.0, 0.0, 0.0, 0.0], dtype=tf.float32),
+        sample_weights=tf.constant([2.0, 0.0], dtype=tf.float32),
+    )
+    zero_weight_model = SimpleNamespace(
+        model_name="Dummy",
+        output=tf.constant([0.0, 0.0, 0.0, 0.0], dtype=tf.float32),
+        sample_weights=tf.constant([0.0, 0.0], dtype=tf.float32),
+    )
+
+    with tf.Session() as sess:
+        weighted_loss, zero_loss = sess.run(
+            [
+                choose_tf_loss(weighted_model, "ranking", "ranknet"),
+                choose_tf_loss(zero_weight_model, "ranking", "ranknet"),
+            ]
+        )
+
+    assert weighted_loss == pytest.approx(np.log(2.0))
+    assert zero_loss == pytest.approx(0.0)
+
+
 def test_choose_tf_loss_weighted_softmax():
     tf.reset_default_graph()
     model = SimpleNamespace(

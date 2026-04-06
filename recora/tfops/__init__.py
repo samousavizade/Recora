@@ -5,7 +5,7 @@ from .configs import (
     reg_config,
     sess_config,
 )
-from .loss import choose_tf_loss
+from .loss import choose_tf_loss, maybe_build_pairwise_scores
 from .rebuild import rebuild_tf_model
 from .variables import get_variable_from_graph, modify_variable_names, var_list_by_name
 from .version import TF_VERSION, get_tf_version, tf
@@ -19,6 +19,7 @@ __all__ = [
     "sess_config",
     "rebuild_tf_model",
     "choose_tf_loss",
+    "maybe_build_pairwise_scores",
     "modify_variable_names",
     "var_list_by_name",
     "tf",

@@ -27,7 +27,7 @@ class FM(TfBase, metaclass=ModelMeta):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'focal'}, default: 'cross_entropy'
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr'}, default: 'cross_entropy'
         Loss for model training.
     embed_size: int, default: 16
         Vector size of embeddings.

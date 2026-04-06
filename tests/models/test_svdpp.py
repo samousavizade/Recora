@@ -19,11 +19,17 @@ from tests.utils_save_load import save_load_model
         ("rating", "focal", "random", None),
         ("rating", "focal", None, True),
         ("rating", "focal", "random", True),
+        ("rating", "ranknet", "random", False),
+        ("rating", "bpr", "random", False),
         ("ranking", "cross_entropy", "random", False),
         ("ranking", "focal", "random", False),
+        ("ranking", "ranknet", "random", False),
+        ("ranking", "bpr", "random", False),
         ("ranking", "cross_entropy", "random", True),
         ("ranking", "cross_entropy", "unconsumed", True),
         ("ranking", "focal", "popular", True),
+        ("ranking", "ranknet", "random", True),
+        ("ranking", "bpr", "popular", True),
         ("ranking", "unknown", "popular", True),
     ],
 )
@@ -64,6 +70,15 @@ def test_svdpp(
     elif loss_type == "focal" and (neg_sampling is False or sampler is None):
         with pytest.raises(ValueError):
             SVDpp(task, data_info, sampler=sampler).fit(train_data, neg_sampling)
+    elif loss_type in ("ranknet", "bpr") and not neg_sampling:
+        with pytest.raises(ValueError):
+            SVDpp(
+                task,
+                data_info,
+                loss_type=loss_type,
+                sampler=sampler,
+                recent_num=recent_num,
+            ).fit(train_data, neg_sampling)
     else:
         model = SVDpp(
             task=task,
@@ -79,7 +94,12 @@ def test_svdpp(
             recent_num=recent_num,
             tf_sess_config=None,
         )
-        if task == "ranking" and loss_type not in ("cross_entropy", "focal"):
+        if task == "ranking" and loss_type not in (
+            "cross_entropy",
+            "focal",
+            "ranknet",
+            "bpr",
+        ):
             with pytest.raises(ValueError):
                 model.fit(train_data, neg_sampling)
         else:

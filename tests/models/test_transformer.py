@@ -15,6 +15,8 @@ from tests.utils_save_load import save_load_model
     [
         ("rating", "whatever"),
         ("ranking", "cross_entropy"),
+        ("ranking", "ranknet"),
+        ("ranking", "bpr"),
         ("ranking", "unknown"),
     ],
 )
@@ -43,7 +45,12 @@ def test_transformer(
     pd_data, train_data, eval_data, data_info = feat_data_small
 
     neg_sampling = True if task == "ranking" else False
-    if task == "ranking" and loss_type not in ("cross_entropy", "focal"):
+    if task == "ranking" and loss_type not in (
+        "cross_entropy",
+        "focal",
+        "ranknet",
+        "bpr",
+    ):
         with pytest.raises(ValueError):
             _ = Transformer(task, data_info, loss_type)
     elif feat_agg_mode == "whatever":
@@ -102,3 +109,15 @@ def test_transformer_multi_sparse(multi_sparse_data_small):
     ptest_recommends(loaded_model, loaded_data_info, pd_data, with_feats=True)
     with pytest.raises(RuntimeError):
         loaded_model.fit(train_data, neg_sampling=True)
+
+
+@pytest.mark.parametrize("task", ["rating", "ranking"])
+@pytest.mark.parametrize("loss_type", ["ranknet", "bpr"])
+def test_transformer_pairwise_requires_neg_sampling(
+    feat_data_small, task, loss_type
+):
+    tf.compat.v1.reset_default_graph()
+    _, train_data, _, data_info = feat_data_small
+
+    with pytest.raises(ValueError):
+        Transformer(task, data_info, loss_type).fit(train_data, neg_sampling=False)

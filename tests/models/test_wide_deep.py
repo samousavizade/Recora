@@ -19,11 +19,17 @@ from tests.utils_save_load import save_load_model
         ("rating", "focal", "random", None),
         ("rating", "focal", None, True),
         ("rating", "focal", "random", True),
+        ("rating", "ranknet", "random", False),
+        ("rating", "bpr", "random", False),
         ("ranking", "cross_entropy", "random", False),
         ("ranking", "focal", "unconsumed", False),
+        ("ranking", "ranknet", "random", False),
+        ("ranking", "bpr", "random", False),
         ("ranking", "cross_entropy", "random", True),
         ("ranking", "cross_entropy", "unconsumed", True),
         ("ranking", "focal", "popular", True),
+        ("ranking", "ranknet", "random", True),
+        ("ranking", "bpr", "popular", True),
         ("ranking", "unknown", "popular", True),
     ],
 )
@@ -72,7 +78,17 @@ def test_wide_deep(
     elif loss_type == "focal" and (neg_sampling is False or sampler is None):
         with pytest.raises(ValueError):
             WideDeep(task, data_info, sampler=sampler).fit(train_data, neg_sampling)
-    elif task == "ranking" and loss_type not in ("cross_entropy", "focal"):
+    elif loss_type in ("ranknet", "bpr") and not neg_sampling:
+        with pytest.raises(ValueError):
+            WideDeep(task, data_info, loss_type=loss_type, sampler=sampler).fit(
+                train_data, neg_sampling
+            )
+    elif task == "ranking" and loss_type not in (
+        "cross_entropy",
+        "focal",
+        "ranknet",
+        "bpr",
+    ):
         with pytest.raises(ValueError):
             WideDeep(task, data_info, loss_type).fit(train_data, neg_sampling)
     else:

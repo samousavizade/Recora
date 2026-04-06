@@ -4,7 +4,8 @@ import numpy as np
 import pandas as pd
 import pytest
 
-from recora.algorithms import DIN, RNN4Rec, TwoTower
+from recora.algorithms import DIN, FM, RNN4Rec, SIM, SVD, TwoTower
+from recora.batch import get_tf_feeds
 from recora.batch.batch_data import BatchData
 from recora.batch.batch_unit import (
     PairFeats,
@@ -15,7 +16,12 @@ from recora.batch.batch_unit import (
     TripleFeats,
 )
 from recora.batch.collators import BaseCollator as NormalCollator
-from recora.batch.collators import PairwiseCollator, PointwiseCollator, SparseCollator
+from recora.batch.collators import (
+    PairwiseCollator,
+    PointwiseCollator,
+    SparseCollator,
+    merge_columns,
+)
 from recora.data import DatasetFeat
 from recora.sampling.negatives import negatives_from_unconsumed
 from recora.tfops import tf
@@ -317,6 +323,129 @@ def test_pairwise_separate_features_collator(config_feat_data):
         assert batch.dense_values.item_pos_feats.shape[1] == item_dense_len
         assert isinstance(batch.dense_values.item_neg_feats, np.ndarray)
         assert batch.dense_values.item_neg_feats.shape[1] == item_dense_len
+    tf.reset_default_graph()
+
+
+def test_pairwise_feed_dict_pure_model(pure_data_small):
+    _, train_data, _, data_info = pure_data_small
+    model = SVD("ranking", data_info, loss_type="bpr", num_neg=2)
+    model.build_model()
+    original_data = BatchData(train_data, use_features=False)[[0, 1, 2]]
+
+    collator = PairwiseCollator(model, data_info, repeat_positives=True)
+    batch = collator(original_data)
+    feed_dict = get_tf_feeds(model, batch, is_training=True)
+
+    expected_queries = np.concatenate([batch.queries, batch.queries], axis=0)
+    expected_items = np.concatenate(batch.item_pairs, axis=0)
+    assert np.array_equal(feed_dict[model.user_indices], expected_queries)
+    assert np.array_equal(feed_dict[model.item_indices], expected_items)
+    tf.reset_default_graph()
+
+
+@pytest.mark.parametrize(
+    "config_feat_data",
+    [
+        {
+            "sparse_col": ["sex", "genre1"],
+            "dense_col": ["age", "item_dense_col"],
+            "user_col": ["sex", "age"],
+            "item_col": ["genre1", "item_dense_col"],
+        }
+    ],
+    indirect=True,
+)
+def test_pairwise_feed_dict_merged_features(config_feat_data):
+    train_data, data_info = config_feat_data
+    model = FM("ranking", data_info, "ranknet", num_neg=2)
+    model.build_model()
+    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
+
+    collator = PairwiseCollator(model, data_info, repeat_positives=True)
+    batch = collator(original_data)
+    feed_dict = get_tf_feeds(model, batch, is_training=True)
+
+    expected_queries = np.concatenate([batch.queries, batch.queries], axis=0)
+    expected_items = np.concatenate(batch.item_pairs, axis=0)
+    expected_sparse_pos = merge_columns(
+        batch.sparse_indices.query_feats,
+        batch.sparse_indices.item_pos_feats,
+        data_info.user_sparse_col.index,
+        data_info.item_sparse_col.index,
+    )
+    expected_sparse_neg = merge_columns(
+        batch.sparse_indices.query_feats,
+        batch.sparse_indices.item_neg_feats,
+        data_info.user_sparse_col.index,
+        data_info.item_sparse_col.index,
+    )
+    expected_dense_pos = merge_columns(
+        batch.dense_values.query_feats,
+        batch.dense_values.item_pos_feats,
+        data_info.user_dense_col.index,
+        data_info.item_dense_col.index,
+    )
+    expected_dense_neg = merge_columns(
+        batch.dense_values.query_feats,
+        batch.dense_values.item_neg_feats,
+        data_info.user_dense_col.index,
+        data_info.item_dense_col.index,
+    )
+
+    assert np.array_equal(feed_dict[model.user_indices], expected_queries)
+    assert np.array_equal(feed_dict[model.item_indices], expected_items)
+    assert np.array_equal(
+        feed_dict[model.sparse_indices],
+        np.concatenate([expected_sparse_pos, expected_sparse_neg], axis=0),
+    )
+    assert np.array_equal(
+        feed_dict[model.dense_values],
+        np.concatenate([expected_dense_pos, expected_dense_neg], axis=0),
+    )
+    tf.reset_default_graph()
+
+
+@pytest.mark.parametrize(
+    "config_feat_data",
+    [
+        {
+            "sparse_col": ["sex", "genre1"],
+            "dense_col": ["age", "item_dense_col"],
+            "user_col": ["sex", "age"],
+            "item_col": ["genre1", "item_dense_col"],
+        }
+    ],
+    indirect=True,
+)
+def test_pairwise_feed_dict_sim_dual_sequences(config_feat_data):
+    train_data, data_info = config_feat_data
+    model = SIM(
+        "ranking",
+        data_info,
+        "ranknet",
+        num_neg=2,
+        search_topk=1,
+        long_max_len=4,
+        short_max_len=2,
+    )
+    model.build_model()
+    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
+
+    collator = PairwiseCollator(model, data_info, repeat_positives=True)
+    batch = collator(original_data)
+    feed_dict = get_tf_feeds(model, batch, is_training=True)
+    split_index = len(batch.queries)
+
+    assert np.array_equal(feed_dict[model.user_indices][:split_index], batch.queries)
+    assert np.array_equal(feed_dict[model.user_indices][split_index:], batch.queries)
+    assert np.array_equal(feed_dict[model.long_seqs][:split_index], batch.seqs.long_seq)
+    assert np.array_equal(feed_dict[model.long_seqs][split_index:], batch.seqs.long_seq)
+    assert np.array_equal(
+        feed_dict[model.short_seqs][:split_index], batch.seqs.short_seq
+    )
+    assert np.array_equal(
+        feed_dict[model.short_seqs][split_index:], batch.seqs.short_seq
+    )
     tf.reset_default_graph()
 
 

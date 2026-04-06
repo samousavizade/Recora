@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Generic, Iterable, Optional, Tuple, TypeVar
+from typing import Generic, Iterable, Optional, Tuple, TypeVar, Union
 
 import numpy as np
 
@@ -93,7 +93,7 @@ class PairwiseBatch:
     sample_weights: Iterable[float]
     sparse_indices: Optional[TripleFeats[int]]
     dense_values: Optional[TripleFeats[float]]
-    seqs: Optional[SeqFeats]
+    seqs: Optional[Union[SeqFeats, DualSeqFeats]]
 
 
 @dataclass

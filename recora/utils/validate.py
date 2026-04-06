@@ -126,7 +126,7 @@ def check_neg_sampling(model, neg_sampling):
         raise ValueError("`rating` task should not use negative sampling")
     if (
         hasattr(model, "loss_type")
-        and model.loss_type in ("bpr", "max_margin")
+        and model.loss_type in ("bpr", "ranknet", "max_margin")
         and not neg_sampling
     ):
         raise ValueError(f"`{model.loss_type}` loss must use negative sampling.")

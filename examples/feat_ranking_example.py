@@ -55,7 +55,7 @@ if __name__ == "__main__":
     fm = FM(
         "ranking",
         data_info,
-        loss_type="cross_entropy",
+        loss_type="ranknet",
         embed_size=16,
         n_epochs=3,
         lr=1e-4,
