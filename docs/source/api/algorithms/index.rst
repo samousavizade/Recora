@@ -16,6 +16,8 @@ Algorithms
    ncf
    bpr
    ngcf
+   graphsage
+   pinsage
    wide_deep
    fm
    deepfm

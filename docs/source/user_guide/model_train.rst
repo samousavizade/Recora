@@ -11,7 +11,7 @@ them as ``pure`` models. This category includes ``UserCF``, ``ItemCF``, ``SVD``,
 
 Then for models that can use other features (e.g., age, sex, name etc.), we call
 them ``feat`` models. This category includes ``WideDeep``, ``FM``, ``DeepFM``, ``YouTubeRetrieval``,
-``YouTubeRanking``, ``AutoInt``, ``DIN``, ``TwoTower``, ``Transformer``, ``SIM``.
+``GraphSage``, ``PinSage``, ``YouTubeRanking``, ``AutoInt``, ``DIN``, ``TwoTower``, ``Transformer``, ``SIM``.
 
 The main difference on usage between these two kinds of models are:
 
@@ -72,6 +72,8 @@ The table below lists the losses and :ref:`negative samplers <negative-samplers>
 |                                         BPR                                          |                  bpr                  |      random, unconsumed, popular       |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
 |                                   YouTubeRetrieval                                   |          sampled_softmax, nce         |             uniform, other             |
++--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
+|                                  GraphSage, PinSage                                  |   cross_entropy, max_margin, softmax  |      random, unconsumed, popular       |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+
 | SVD, SVD++, NCF, Wide&Deep, FM, DeepFM, YouTubeRanking, AutoInt, DIN, Caser, WaveNet |         cross_entropy, focal          |      random, unconsumed, popular       |
 +--------------------------------------------------------------------------------------+---------------------------------------+----------------------------------------+

@@ -8,7 +8,16 @@ from tests.utils_data import SAVE_PATH
 
 @pytest.mark.parametrize(
     "online_model",
-    ["pure", "user_feat", "separate", "multi_sparse", "item_feat", "all"],
+    [
+        "pure",
+        "user_feat",
+        "separate",
+        "multi_sparse",
+        "item_feat",
+        "all",
+        "graphsage",
+        "pinsage",
+    ],
     indirect=True,
 )
 def test_online_serving(online_model, session, close_server):

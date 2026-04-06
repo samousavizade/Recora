@@ -14,9 +14,11 @@ from recora.algorithms import (
     ALS,
     DIN,
     FM,
+    GraphSage,
     LightGCN,
     NCF,
     ItemCF,
+    PinSage,
     RNN4Rec,
     TwoTower,
     UserCF,
@@ -181,6 +183,22 @@ def online_model(make_synthetic_data, request):
             "item_col": ["genre1", "genre3", "genre2", "profit"],
         }
         model_cls = DIN
+    elif request.param == "graphsage":
+        features = {
+            "sparse_col": ["genre3", "genre2", "sex", "occupation", "genre1"],
+            "dense_col": ["age", "profit"],
+            "user_col": ["sex", "age", "occupation"],
+            "item_col": ["genre1", "genre3", "genre2", "profit"],
+        }
+        model_cls = GraphSage
+    elif request.param == "pinsage":
+        features = {
+            "sparse_col": ["genre3", "genre2", "sex", "occupation", "genre1"],
+            "dense_col": ["age", "profit"],
+            "user_col": ["sex", "age", "occupation"],
+            "item_col": ["genre1", "genre3", "genre2", "profit"],
+        }
+        model_cls = PinSage
     else:
         raise ValueError(f"Unknown type `{request.param}`")
 

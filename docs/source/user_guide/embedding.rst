@@ -3,7 +3,8 @@ Embedding
 
 According to the `algorithm list <https://github.com/samousavizade/MyRec#references>`_,
 there are some algorithms that can generate user and item embeddings after training.
-This includes collaborative graph models such as ``LightGCN`` and ``NGCF``.
+This includes collaborative graph models such as ``LightGCN`` and ``NGCF``,
+and feature-aware retrieval models such as ``GraphSage`` and ``PinSage``.
 So Recora provides public APIs to get them:
 
 .. code-block:: python3

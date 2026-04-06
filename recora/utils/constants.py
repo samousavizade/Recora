@@ -12,6 +12,8 @@ class FeatModels(StrEnum):
     WIDEDEEP = "WideDeep"
     FM = "FM"
     DEEPFM = "DeepFM"
+    GRAPHSAGE = "GraphSage"
+    PINSAGE = "PinSage"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
     YOUTUBERANKING = "YouTubeRanking"
     AUTOINT = "AutoInt"
@@ -23,6 +25,8 @@ class FeatModels(StrEnum):
 
 @unique
 class SequenceModels(StrEnum):
+    GRAPHSAGE = "GraphSage"
+    PINSAGE = "PinSage"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
     YOUTUBERANKING = "YouTubeRanking"
     DIN = "DIN"
@@ -44,6 +48,8 @@ class TfTrainModels(StrEnum):
     WIDEDEEP = "WideDeep"
     FM = "FM"
     DEEPFM = "DeepFM"
+    GRAPHSAGE = "GraphSage"
+    PINSAGE = "PinSage"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
     YOUTUBERANKING = "YouTubeRanking"
     AUTOINT = "AutoInt"
@@ -64,6 +70,8 @@ class EmbeddingModels(StrEnum):
     BPR = "BPR"
     LIGHTGCN = "LightGCN"
     NGCF = "NGCF"
+    GRAPHSAGE = "GraphSage"
+    PINSAGE = "PinSage"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
     RNN4REC = "RNN4Rec"
     CASER = "Caser"
@@ -75,6 +83,8 @@ class EmbeddingModels(StrEnum):
 class UserEmbedModels(StrEnum):
     """Models can only generate user embeddings dynamically."""
 
+    GRAPHSAGE = "GraphSage"
+    PINSAGE = "PinSage"
     YOUTUBERETRIEVAL = "YouTubeRetrieval"
     RNN4REC = "RNN4Rec"
     CASER = "Caser"

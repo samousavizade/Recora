@@ -2,7 +2,7 @@ use crate::redis_ops::RedisFeatKeys;
 
 pub const KNN_MODELS: [&'static str; 2] = ["UserCF", "ItemCF"];
 
-pub const EMBED_MODELS: [&'static str; 14] = [
+pub const EMBED_MODELS: [&'static str; 15] = [
     "SVD",
     "SVDpp",
     "ALS",
@@ -15,6 +15,7 @@ pub const EMBED_MODELS: [&'static str; 14] = [
     "DeepWalk",
     "NGCF",
     "LightGCN",
+    "GraphSage",
     "PinSage",
     "PinSageDGL",
 ];
@@ -28,9 +29,11 @@ pub const CROSS_FEAT_MODELS: [&'static str; 6] = [
     "DIN",
 ];
 
-pub const SEQ_EMBED_MODELS: [&'static str; 3] = ["RNN4Rec", "Caser", "WaveNet"];
+pub const SEQ_EMBED_MODELS: [&'static str; 5] =
+    ["RNN4Rec", "Caser", "WaveNet", "GraphSage", "PinSage"];
 
-pub const USER_ID_EMBED_MODELS: [&'static str; 2] = ["Caser", "WaveNet"];
+pub const USER_ID_EMBED_MODELS: [&'static str; 4] =
+    ["Caser", "WaveNet", "GraphSage", "PinSage"];
 
 pub const SEPARATE_FEAT_MODELS: [&'static str; 1] = ["TwoTower"];
 

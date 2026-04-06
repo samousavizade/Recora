@@ -22,7 +22,7 @@ For example, using the `SVD` model with `rating` task:
 
 The implicit data typically may only contain positive feedback, i.e. only has samples that labeled as 1. In this case negative sampling is needed to effectively train a model. We'll cover negative sampling issue in the [section below](#negative-sampling).
 
-By the way, some models such as `BPR`, `LightGCN`, `NGCF`, `YouTubeRetrieval`, `YouTubeRanking`, `RNN4Rec`, `Caser`, `WaveNet`, `Transformer` and `SIM` can only be used for `ranking` tasks since they are specially designed for that.
+By the way, some models such as `BPR`, `LightGCN`, `NGCF`, `YouTubeRetrieval`, `GraphSage`, `PinSage`, `YouTubeRanking`, `RNN4Rec`, `Caser`, `WaveNet`, `Transformer` and `SIM` can only be used for `ranking` tasks since they are specially designed for that.
 
 
 
@@ -30,7 +30,7 @@ By the way, some models such as `BPR`, `LightGCN`, `NGCF`, `YouTubeRetrieval`, `
 
 Recora is a hybrid recommender system, which means you can choose whether to use features other than user behaviors or not. For models only use user behaviors, we classify them as `pure` models. This category includes `UserCF`, `ItemCF`, `SVD`, `SVD++`, `ALS`, `NCF`, `BPR`, `LightGCN`, `NGCF`, `RNN4Rec`, `Caser`, `WaveNet`.
 
-Then for models that can include other features (e.g., age, sex, name etc.), we call them `feat` models. This category includes `WideDeep`, `FM`, `DeepFM`, `YouTubeRetrieval`, `YouTubeRanking`, `AutoInt`, `DIN`, `TwoTower`, `Transformer`, `SIM`.
+Then for models that can include other features (e.g., age, sex, name etc.), we call them `feat` models. This category includes `WideDeep`, `FM`, `DeepFM`, `YouTubeRetrieval`, `GraphSage`, `PinSage`, `YouTubeRanking`, `AutoInt`, `DIN`, `TwoTower`, `Transformer`, `SIM`.
 
  The main difference on usage between these two kinds of models are:
 
@@ -377,4 +377,3 @@ See [model_retrain_example.py](https://github.com/samousavizade/MyRec/blob/maste
 + `dropout_rate` : specify dropout rate.
 + `hidden_units` : specify number of layers and hidden units, typically comma-separated string, such as `"128,64,32"`.
 + `recent_num` : used in sequence models, specify number of recent items to consider.
-

@@ -130,10 +130,10 @@ def get_batch_loader(model, data, neg_sampling, batch_size, shuffle, num_workers
 
 def get_collate_fn(model, neg_sampling):
     model_name, data_info = model.model_name, model.data_info
-    separate_features = True if model_name == "TwoTower" else False
+    separate_features = True if getattr(model, "separate_features", False) else False
     if model_name == "YouTubeRetrieval":
         return SparseCollator(model, data_info)
-    if model_name == "TwoTower" and model.loss_type == "softmax":
+    if separate_features and model.loss_type == "softmax":
         return NormalCollator(model, data_info, separate_features)
     if model.task == "rating" or not neg_sampling:
         return NormalCollator(model, data_info, separate_features)

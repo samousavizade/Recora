@@ -66,7 +66,7 @@ def check_sparse_indices(data_info):
 
 
 def check_dense_values(data_info):
-    return False if not data_info.dense_feature_columns.name else True
+    return False if not data_info.dense_col.name else True
 
 
 def sparse_feat_size(data_info):
@@ -92,7 +92,7 @@ def sparse_field_size(data_info):
 
 
 def dense_field_size(data_info):
-    return len(data_info.dense_feature_columns.name)
+    return len(data_info.dense_col.name)
 
 
 def check_multi_sparse(data_info, multi_sparse_combiner):
@@ -173,7 +173,7 @@ def check_sample_weight_support(model, train_data):
 
 def is_listwise_training(model):
     if model.model_name == "YouTubeRetrieval" or (
-        model.model_name == "TwoTower" and model.loss_type == "softmax"
+        getattr(model, "separate_features", False) and model.loss_type == "softmax"
     ):
         return True
     else:

@@ -13,11 +13,26 @@ from sanic.response import HTTPResponse, json
 
 from .common import Params, validate
 
-USER_EMBED_MODELS = ("RNN4Rec", "Caser", "WaveNet", "YouTubeRetrieval")
+USER_EMBED_MODELS = (
+    "RNN4Rec",
+    "Caser",
+    "WaveNet",
+    "YouTubeRetrieval",
+    "GraphSage",
+    "PinSage",
+)
 SEPARATE_FEAT_MODELS = "TwoTower"
 CROSS_FEAT_MODELS = ("WideDeep", "FM", "DeepFM", "AutoInt", "YouTubeRanking", "DIN")
 SPARSE_SEQ_MODELS = "YouTubeRetrieval"
-SEQ_MODELS = ("RNN4Rec", "Caser", "WaveNet", "YouTubeRanking", "DIN")
+SEQ_MODELS = (
+    "RNN4Rec",
+    "Caser",
+    "WaveNet",
+    "YouTubeRanking",
+    "DIN",
+    "GraphSage",
+    "PinSage",
+)
 
 app = Sanic("online-serving")
 
@@ -91,7 +106,7 @@ async def build_user_embed_features(
     features = dict()  # no `item_indices` in UserEmbedModels
     if model_name not in ("RNN4Rec", "YouTubeRetrieval"):
         features.update({"user_indices": [int(user_id)]})
-    if model_name == "YouTubeRetrieval":
+    if model_name in ("YouTubeRetrieval", "GraphSage", "PinSage"):
         user_sparse_feats, user_dense_feats = await split_user_feats(user_feats, r)
         user_sparse_vals = await get_user_feats(
             model_name, user_id, n_items, "user_sparse_values", user_sparse_feats, r

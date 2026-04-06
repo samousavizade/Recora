@@ -83,6 +83,25 @@ def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
             feed_dict.update(
                 {model.item_dense_values_neg: data.dense_values.item_neg_feats}
             )
+    elif getattr(model, "separate_features", False) and model.loss_type == "max_margin":
+        feed_dict = {
+            model.user_indices: data.queries,
+            model.item_indices: data.item_pairs[0],
+            model.item_indices_neg: data.item_pairs[1],
+        }
+        if model.user_sparse:
+            feed_dict.update(
+                {model.user_sparse_indices: data.sparse_indices.query_feats}
+            )
+        if model.user_dense:
+            feed_dict.update({model.user_dense_values: data.dense_values.query_feats})
+        if data.seqs is not None:
+            feed_dict.update(
+                {
+                    model.user_interacted_seq: data.seqs.interacted_seq,
+                    model.user_interacted_len: data.seqs.interacted_len,
+                }
+            )
     elif getattr(model, "loss_type", None) in ("bpr", "ranknet", "lambdarank"):
         feed_dict = _generic_pairwise_feed_dict(model, data)
     else:
@@ -135,14 +154,21 @@ def _separate_feed_dict(model, data: PointwiseSepFeatBatch, is_training):
         feed_dict.update({model.sample_weights: data.sample_weights})
     if hasattr(model, "correction"):
         feed_dict.update({model.correction: model.item_corrections[data.items]})
-    if model.user_sparse:
+    if getattr(model, "user_sparse", False):
         feed_dict.update({model.user_sparse_indices: data.sparse_indices.user_feats})
-    if model.user_dense:
+    if getattr(model, "user_dense", False):
         feed_dict.update({model.user_dense_values: data.dense_values.user_feats})
-    if model.item_sparse:
+    if getattr(model, "item_sparse", False):
         feed_dict.update({model.item_sparse_indices: data.sparse_indices.item_feats})
-    if model.item_dense:
+    if getattr(model, "item_dense", False):
         feed_dict.update({model.item_dense_values: data.dense_values.item_feats})
+    if data.seqs is not None:
+        feed_dict.update(
+            {
+                model.user_interacted_seq: data.seqs.interacted_seq,
+                model.user_interacted_len: data.seqs.interacted_len,
+            }
+        )
     if hasattr(model, "ssl_pattern") and model.ssl_pattern is not None:
         ssl_feats = get_ssl_features(model, len(data.items))
         feed_dict.update(ssl_feats)

@@ -84,7 +84,16 @@ def test_tf_serialization(tf_model, redis_client):
 
 @pytest.mark.parametrize(
     "online_model",
-    ["pure", "user_feat", "separate", "multi_sparse", "item_feat", "all"],
+    [
+        "pure",
+        "user_feat",
+        "separate",
+        "multi_sparse",
+        "item_feat",
+        "all",
+        "graphsage",
+        "pinsage",
+    ],
     indirect=True,
 )
 def test_online_serialization(online_model, redis_client):

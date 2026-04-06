@@ -2,7 +2,15 @@ import sys
 
 import pytest
 
-from recora.algorithms import ALS, BPR, LightGCN, NGCF, RNN4Rec
+from recora.algorithms import (
+    ALS,
+    BPR,
+    GraphSage,
+    LightGCN,
+    NGCF,
+    PinSage,
+    RNN4Rec,
+)
 from tests.utils_data import set_ranking_labels
 
 
@@ -57,6 +65,30 @@ def test_knn_embed(pure_data_small, monkeypatch):
     )
     ngcf.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
     ptest_knn(ngcf, pd_data)
+
+    graphsage = GraphSage(
+        "ranking",
+        data_info,
+        embed_size=8,
+        layer_sizes=(8, 4),
+        n_epochs=1,
+        lr=1e-4,
+        batch_size=20,
+    )
+    graphsage.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
+    ptest_knn(graphsage, pd_data)
+
+    pinsage = PinSage(
+        "ranking",
+        data_info,
+        embed_size=8,
+        layer_sizes=(8, 4),
+        n_epochs=1,
+        lr=1e-4,
+        batch_size=20,
+    )
+    pinsage.fit(train_data, neg_sampling=True, verbose=2, shuffle=True)
+    ptest_knn(pinsage, pd_data)
 
     with pytest.raises(ValueError):
         bpr.get_user_id(-1)

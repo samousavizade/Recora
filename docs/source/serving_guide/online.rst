@@ -12,7 +12,7 @@ Please note that not all models support online computing:
 
 + Supporting user features: ``WideDeep``, ``FM``, ``DeepFM``, ``AutoInt``, ``TwoTower``.
 + Supporting sequences: ``RNN4Rec``, ``Caser``, ``WaveNet``.
-+ Supporting both: ``YouTubeRetrieval``, ``YouTubeRanking``, ``DIN``.
++ Supporting both: ``YouTubeRetrieval``, ``GraphSage``, ``PinSage``, ``YouTubeRanking``, ``DIN``.
 
 
 Seq model

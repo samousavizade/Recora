@@ -88,3 +88,91 @@ def merge_node_embeddings(user_embeds, item_embeds):
 
 def split_node_embeddings(node_embeds, n_users, n_items):
     return node_embeds[:n_users], node_embeds[n_users : n_users + n_items]
+
+
+def build_weighted_item_adjacency(
+    user_consumed,
+    item_consumed,
+    n_items,
+    neighbor_topk,
+    num_walks,
+    walk_length,
+    restart_prob,
+    seed,
+):
+    rng = np.random.default_rng(seed)
+    row_indices = []
+    col_indices = []
+    values = []
+    has_neighbors = []
+
+    for item in range(n_items):
+        weights = _random_walk_item_neighbors(
+            user_consumed,
+            item_consumed,
+            item,
+            num_walks,
+            walk_length,
+            restart_prob,
+            rng,
+        )
+        if not weights:
+            has_neighbors.append(False)
+            continue
+
+        sorted_neighbors = sorted(weights.items(), key=lambda x: (-x[1], x[0]))
+        sorted_neighbors = sorted_neighbors[:neighbor_topk]
+        total_weight = float(sum(weight for _, weight in sorted_neighbors))
+        has_neighbors.append(total_weight > 0.0)
+        if total_weight <= 0.0:
+            continue
+
+        for neighbor, weight in sorted_neighbors:
+            row_indices.append(item)
+            col_indices.append(neighbor)
+            values.append(weight / total_weight)
+
+    if row_indices:
+        indices = np.column_stack([row_indices, col_indices]).astype(np.int64)
+        values = np.asarray(values, dtype=np.float32)
+        order = np.lexsort((indices[:, 1], indices[:, 0]))
+        indices = indices[order]
+        values = values[order]
+    else:
+        indices = np.zeros((0, 2), dtype=np.int64)
+        values = np.zeros(0, dtype=np.float32)
+    shape = np.array([n_items, n_items], dtype=np.int64)
+    return indices, values, shape, has_neighbors
+
+
+def _random_walk_item_neighbors(
+    user_consumed,
+    item_consumed,
+    src_item,
+    num_walks,
+    walk_length,
+    restart_prob,
+    rng,
+):
+    weights = dict()
+    users = item_consumed.get(src_item, [])
+    if not users:
+        return weights
+
+    for _ in range(num_walks):
+        current_item = src_item
+        for _ in range(walk_length):
+            if rng.random() < restart_prob:
+                current_item = src_item
+            connected_users = item_consumed.get(current_item, [])
+            if not connected_users:
+                break
+            sampled_user = int(rng.choice(connected_users))
+            consumed_items = user_consumed.get(sampled_user, [])
+            if not consumed_items:
+                break
+            next_item = int(rng.choice(consumed_items))
+            if next_item != src_item:
+                weights[next_item] = weights.get(next_item, 0.0) + 1.0
+            current_item = next_item
+    return weights
