@@ -66,7 +66,7 @@ def check_sparse_indices(data_info):
 
 
 def check_dense_values(data_info):
-    return False if not data_info.dense_col.name else True
+    return False if not data_info.dense_feature_columns.name else True
 
 
 def sparse_feat_size(data_info):
@@ -92,7 +92,7 @@ def sparse_field_size(data_info):
 
 
 def dense_field_size(data_info):
-    return len(data_info.dense_col.name)
+    return len(data_info.dense_feature_columns.name)
 
 
 def check_multi_sparse(data_info, multi_sparse_combiner):

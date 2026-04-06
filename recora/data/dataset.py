@@ -788,7 +788,7 @@ def _build_features(data, is_train, is_ordered, data_info):
     sparse_indices, dense_values = None, None
     if data_info:
         sparse_cols, multi_sparse_cols = recover_sparse_cols(data_info)
-        dense_cols = data_info.dense_col.name
+        dense_cols = data_info.dense_feature_columns.name
     else:
         sparse_cols = DatasetFeat.sparse_col
         multi_sparse_cols = DatasetFeat.multi_sparse_col
