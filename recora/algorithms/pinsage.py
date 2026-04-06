@@ -110,7 +110,8 @@ class PinSage(GraphFeatBase):
         item_mask = tf.constant(self.item_has_neighbors, dtype=tf.bool)[:, None]
         for layer_idx, layer_size in enumerate(self.layer_sizes, start=1):
             agg_embeds = tf.sparse_tensor_dense_matmul(graph, item_embeds)
-            agg_embeds = tf.where(item_mask, agg_embeds, item_embeds)
+            broadcast_mask = tf.tile(item_mask, [1, tf.shape(agg_embeds)[1]])
+            agg_embeds = tf.where(broadcast_mask, agg_embeds, item_embeds)
             layer_inputs = tf.concat([item_embeds, agg_embeds], axis=1)
             item_embeds = shared_dense(
                 layer_inputs,

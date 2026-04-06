@@ -103,7 +103,8 @@ class GraphSage(GraphFeatBase):
         node_mask = tf.constant(self.node_has_neighbors, dtype=tf.bool)[:, None]
         for layer_idx, layer_size in enumerate(self.layer_sizes, start=1):
             agg_embeds = tf.sparse_tensor_dense_matmul(graph, node_embeds)
-            agg_embeds = tf.where(node_mask, agg_embeds, node_embeds)
+            broadcast_mask = tf.tile(node_mask, [1, tf.shape(agg_embeds)[1]])
+            agg_embeds = tf.where(broadcast_mask, agg_embeds, node_embeds)
             layer_inputs = tf.concat([node_embeds, agg_embeds], axis=1)
             node_embeds = shared_dense(
                 layer_inputs,

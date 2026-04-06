@@ -19,8 +19,13 @@ def reset_state(name):
 
 
 if __name__ == "__main__":
-    data = pd.read_csv("./tests/sample_data/sample_movielens_merged.csv")
+    data_path = _REPO_ROOT / "tests" / "sample_data" / "sample_movielens_merged.csv"
+    data = pd.read_csv(data_path)
     data["item_dense_feat"] = np.random.default_rng(42).normal(size=len(data))
+    sample_user = data.user.iloc[0]
+    sample_item = data.item.iloc[0]
+    sample_feats = {"sex": data.sex.iloc[0], "age": int(data.age.iloc[0])}
+    sample_seq = data.item.iloc[:3].tolist()
 
     train_data, eval_data = split_by_ratio_chrono(data, test_size=0.2)
     train_data, data_info = DatasetFeat.build_trainset(
@@ -52,15 +57,15 @@ if __name__ == "__main__":
         eval_data=eval_data,
         metrics=metrics,
     )
-    print("prediction: ", graphsage.predict(user=1, item=2333))
-    print("recommendation: ", graphsage.recommend_user(user=1, n_rec=7))
+    print("prediction: ", graphsage.predict(user=sample_user, item=sample_item))
+    print("recommendation: ", graphsage.recommend_user(user=sample_user, n_rec=7))
     print(
         "dynamic recommendation: ",
         graphsage.recommend_user(
-            user=1,
+            user=sample_user,
             n_rec=7,
-            user_feats={"sex": "M", "age": 25},
-            seq=[1, 2, 3],
+            user_feats=sample_feats,
+            seq=sample_seq,
         ),
     )
 
@@ -84,14 +89,14 @@ if __name__ == "__main__":
         eval_data=eval_data,
         metrics=metrics,
     )
-    print("prediction: ", pinsage.predict(user=1, item=2333))
-    print("recommendation: ", pinsage.recommend_user(user=1, n_rec=7))
+    print("prediction: ", pinsage.predict(user=sample_user, item=sample_item))
+    print("recommendation: ", pinsage.recommend_user(user=sample_user, n_rec=7))
     print(
         "dynamic recommendation: ",
         pinsage.recommend_user(
-            user=1,
+            user=sample_user,
             n_rec=7,
-            user_feats={"sex": "M", "age": 25},
-            seq=[1, 2, 3],
+            user_feats=sample_feats,
+            seq=sample_seq,
         ),
     )
