@@ -40,7 +40,7 @@ class Transformer(TfBase, metaclass=ModelMeta):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr'}, default: 'cross_entropy'
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr', 'lambdarank'}, default: 'cross_entropy'
         Loss for model training.
     embed_size: int, default: 16
         Vector size of embeddings.
@@ -199,6 +199,7 @@ class Transformer(TfBase, metaclass=ModelMeta):
             "focal",
             "ranknet",
             "bpr",
+            "lambdarank",
         ):
             raise ValueError(f"unsupported `loss_type`: {self.loss_type}")
         if self.feat_agg_mode not in ("concat", "elementwise"):

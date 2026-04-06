@@ -2,7 +2,7 @@ from .version import tf
 
 
 def maybe_build_pairwise_scores(model, loss_type):
-    if loss_type not in ("bpr", "ranknet"):
+    if loss_type not in ("bpr", "ranknet", "lambdarank"):
         return
     if hasattr(model, "pairwise_logits") or not hasattr(model, "output"):
         return
@@ -35,6 +35,16 @@ def choose_tf_loss(model, task, loss_type):
             per_example_loss = tf.nn.sigmoid_cross_entropy_with_logits(
                 labels=tf.ones_like(model.pairwise_logits),
                 logits=model.pairwise_logits,
+            )
+            loss = weighted_mean(
+                per_example_loss, get_sample_weights(model, per_example_loss)
+            )
+        elif loss_type == "lambdarank":
+            assert hasattr(model, "pairwise_logits"), (
+                f"LambdaRank loss is unavailable in `{model.model_name}`"
+            )  # fmt: skip
+            per_example_loss = sampled_lambdarank_loss(
+                model.output_pos, model.output_neg, model.pairwise_logits, model.num_neg
             )
             loss = weighted_mean(
                 per_example_loss, get_sample_weights(model, per_example_loss)
@@ -127,3 +137,33 @@ def softmax_cross_entropy(model, user_embeds, item_embeds, all_adjust=True):
     logits = model.adjust_logits(logits, all_adjust)
     labels = tf.range(tf.shape(user_embeds)[0])
     return tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+
+
+def sampled_lambdarank_loss(output_pos, output_neg, pairwise_logits, num_neg):
+    if not num_neg or num_neg < 1:
+        raise ValueError("`lambdarank` requires `num_neg` to be a positive integer")
+
+    pos_scores = tf.reshape(output_pos, [-1, num_neg])
+    neg_scores = tf.reshape(output_neg, [-1, num_neg])
+    pairwise_logits = tf.reshape(pairwise_logits, [-1, num_neg])
+
+    # Each training group contains one positive item and its sampled negatives.
+    group_pos_scores = tf.reduce_mean(pos_scores, axis=1, keepdims=True)
+    group_scores = tf.concat([group_pos_scores, neg_scores], axis=1)
+
+    sorted_indices = tf.argsort(group_scores, axis=1, direction="DESCENDING")
+    ranks = tf.cast(tf.argsort(sorted_indices, axis=1) + 1, tf.float32)
+    pos_ranks = ranks[:, :1]
+    neg_ranks = ranks[:, 1:]
+    delta_ndcg = tf.abs(_discount(pos_ranks) - _discount(neg_ranks))
+
+    pairwise_loss = tf.nn.sigmoid_cross_entropy_with_logits(
+        labels=tf.ones_like(pairwise_logits), logits=pairwise_logits
+    )
+    return tf.reshape(pairwise_loss * delta_ndcg, [-1])
+
+
+def _discount(ranks):
+    return tf.math.divide_no_nan(
+        tf.ones_like(ranks), tf.math.log(ranks + 1.0) / tf.math.log(2.0)
+    )

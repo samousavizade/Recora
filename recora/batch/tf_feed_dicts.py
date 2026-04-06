@@ -83,7 +83,7 @@ def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
             feed_dict.update(
                 {model.item_dense_values_neg: data.dense_values.item_neg_feats}
             )
-    elif getattr(model, "loss_type", None) in ("bpr", "ranknet"):
+    elif getattr(model, "loss_type", None) in ("bpr", "ranknet", "lambdarank"):
         feed_dict = _generic_pairwise_feed_dict(model, data)
     else:
         raise ValueError(

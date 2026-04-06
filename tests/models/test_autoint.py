@@ -20,6 +20,7 @@ from tests.utils_save_load import save_load_model
         ("ranking", "focal"),
         ("ranking", "ranknet"),
         ("ranking", "bpr"),
+        ("ranking", "lambdarank"),
         ("ranking", "unknown"),
     ],
 )
@@ -55,6 +56,7 @@ def test_autoint(
         "focal",
         "ranknet",
         "bpr",
+        "lambdarank",
     ):
         with pytest.raises(ValueError):
             AutoInt(task, data_info, loss_type).fit(train_data, neg_sampling)
@@ -107,7 +109,7 @@ def test_autoint_multi_sparse(multi_sparse_data_small):
 
 
 @pytest.mark.parametrize("task", ["rating", "ranking"])
-@pytest.mark.parametrize("loss_type", ["ranknet", "bpr"])
+@pytest.mark.parametrize("loss_type", ["ranknet", "bpr", "lambdarank"])
 def test_autoint_pairwise_requires_neg_sampling(feat_data_small, task, loss_type):
     tf.compat.v1.reset_default_graph()
     _, train_data, _, data_info = feat_data_small

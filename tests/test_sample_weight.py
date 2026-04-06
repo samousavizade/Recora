@@ -115,6 +115,35 @@ def test_choose_tf_loss_weighted_ranknet_and_zero_weights():
     assert zero_loss == pytest.approx(0.0)
 
 
+def test_choose_tf_loss_weighted_lambdarank_and_zero_weights():
+    tf.reset_default_graph()
+    weighted_model = SimpleNamespace(
+        model_name="Dummy",
+        output=tf.constant([2.0, 2.0, 1.0, 3.0], dtype=tf.float32),
+        sample_weights=tf.constant([2.0, 0.0], dtype=tf.float32),
+        num_neg=1,
+    )
+    zero_weight_model = SimpleNamespace(
+        model_name="Dummy",
+        output=tf.constant([2.0, 2.0, 1.0, 3.0], dtype=tf.float32),
+        sample_weights=tf.constant([0.0, 0.0], dtype=tf.float32),
+        num_neg=1,
+    )
+    expected_delta_ndcg = 1.0 - 1.0 / np.log2(3.0)
+    expected_loss = np.log1p(np.exp(-1.0)) * expected_delta_ndcg
+
+    with tf.Session() as sess:
+        weighted_loss, zero_loss = sess.run(
+            [
+                choose_tf_loss(weighted_model, "ranking", "lambdarank"),
+                choose_tf_loss(zero_weight_model, "ranking", "lambdarank"),
+            ]
+        )
+
+    assert weighted_loss == pytest.approx(expected_loss)
+    assert zero_loss == pytest.approx(0.0)
+
+
 def test_choose_tf_loss_weighted_softmax():
     tf.reset_default_graph()
     model = SimpleNamespace(

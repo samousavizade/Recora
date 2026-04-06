@@ -17,6 +17,7 @@ from tests.utils_save_load import save_load_model
         ("ranking", "cross_entropy"),
         ("ranking", "ranknet"),
         ("ranking", "bpr"),
+        ("ranking", "lambdarank"),
         ("ranking", "unknown"),
     ],
 )
@@ -50,6 +51,7 @@ def test_transformer(
         "focal",
         "ranknet",
         "bpr",
+        "lambdarank",
     ):
         with pytest.raises(ValueError):
             _ = Transformer(task, data_info, loss_type)
@@ -112,7 +114,7 @@ def test_transformer_multi_sparse(multi_sparse_data_small):
 
 
 @pytest.mark.parametrize("task", ["rating", "ranking"])
-@pytest.mark.parametrize("loss_type", ["ranknet", "bpr"])
+@pytest.mark.parametrize("loss_type", ["ranknet", "bpr", "lambdarank"])
 def test_transformer_pairwise_requires_neg_sampling(
     feat_data_small, task, loss_type
 ):

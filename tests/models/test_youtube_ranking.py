@@ -22,15 +22,18 @@ from tests.utils_save_load import save_load_model
         ("rating", "focal", "random", True),
         ("rating", "ranknet", "random", False),
         ("rating", "bpr", "random", False),
+        ("rating", "lambdarank", "random", False),
         ("ranking", "cross_entropy", "random", False),
         ("ranking", "focal", "unconsumed", False),
         ("ranking", "ranknet", "random", False),
         ("ranking", "bpr", "random", False),
+        ("ranking", "lambdarank", "random", False),
         ("ranking", "cross_entropy", "random", True),
         ("ranking", "cross_entropy", "unconsumed", True),
         ("ranking", "focal", "popular", True),
         ("ranking", "ranknet", "random", True),
         ("ranking", "bpr", "popular", True),
+        ("ranking", "lambdarank", "random", True),
         ("ranking", "unknown", "popular", True),
     ],
 )
@@ -80,7 +83,7 @@ def test_youtube_ranking(
             YouTubeRanking(task, data_info, sampler=sampler).fit(
                 train_data, neg_sampling
             )
-    elif loss_type in ("ranknet", "bpr") and not neg_sampling:
+    elif loss_type in ("ranknet", "bpr", "lambdarank") and not neg_sampling:
         with pytest.raises(ValueError):
             YouTubeRanking(
                 task,
@@ -93,6 +96,7 @@ def test_youtube_ranking(
         "focal",
         "ranknet",
         "bpr",
+        "lambdarank",
     ):
         with pytest.raises(ValueError):
             YouTubeRanking(task, data_info, loss_type).fit(train_data, neg_sampling)

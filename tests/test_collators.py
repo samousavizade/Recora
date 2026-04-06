@@ -326,9 +326,10 @@ def test_pairwise_separate_features_collator(config_feat_data):
     tf.reset_default_graph()
 
 
-def test_pairwise_feed_dict_pure_model(pure_data_small):
+@pytest.mark.parametrize("loss_type", ["bpr", "lambdarank"])
+def test_pairwise_feed_dict_pure_model(pure_data_small, loss_type):
     _, train_data, _, data_info = pure_data_small
-    model = SVD("ranking", data_info, loss_type="bpr", num_neg=2)
+    model = SVD("ranking", data_info, loss_type=loss_type, num_neg=2)
     model.build_model()
     original_data = BatchData(train_data, use_features=False)[[0, 1, 2]]
 
@@ -355,9 +356,10 @@ def test_pairwise_feed_dict_pure_model(pure_data_small):
     ],
     indirect=True,
 )
-def test_pairwise_feed_dict_merged_features(config_feat_data):
+@pytest.mark.parametrize("loss_type", ["ranknet", "lambdarank"])
+def test_pairwise_feed_dict_merged_features(config_feat_data, loss_type):
     train_data, data_info = config_feat_data
-    model = FM("ranking", data_info, "ranknet", num_neg=2)
+    model = FM("ranking", data_info, loss_type, num_neg=2)
     model.build_model()
     original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
 
