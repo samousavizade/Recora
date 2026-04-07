@@ -33,7 +33,7 @@ class YouTubeRanking(TfBase, metaclass=ModelMeta):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr', 'lambdarank'}, default: 'cross_entropy'
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr', 'lambdarank', 'listnet', 'approx_ndcg'}, default: 'cross_entropy'
         Loss for model training.
     embed_size: int, default: 16
         Vector size of embeddings.
@@ -123,12 +123,16 @@ class YouTubeRanking(TfBase, metaclass=ModelMeta):
         seed=42,
         lower_upper_bound=None,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         super().__init__(task, data_info, lower_upper_bound, tf_sess_config)
 
         assert task == "ranking", "YouTube models is only suitable for ranking"
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.embed_size = embed_size
         self.n_epochs = n_epochs
         self.lr = lr

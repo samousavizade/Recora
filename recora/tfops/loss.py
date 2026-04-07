@@ -94,6 +94,28 @@ def choose_tf_loss(model, task, loss_type):
                     get_sample_weights(model, ssl_per_example_loss),
                 )
                 loss += model.alpha * ssl_loss
+        elif loss_type == "listnet":
+            per_group_loss = listnet_loss(
+                model.output,
+                model.labels,
+                model.num_neg,
+                getattr(model, "listnet_temperature", 1.0),
+            )
+            loss = weighted_mean(
+                per_group_loss,
+                get_listwise_sample_weights(model, per_group_loss, model.num_neg),
+            )
+        elif loss_type == "approx_ndcg":
+            per_group_loss = approx_ndcg_loss(
+                model.output,
+                model.labels,
+                model.num_neg,
+                getattr(model, "approx_ndcg_temperature", 1.0),
+            )
+            loss = weighted_mean(
+                per_group_loss,
+                get_listwise_sample_weights(model, per_group_loss, model.num_neg),
+            )
         else:
             raise ValueError(f"unknown loss_type for ranking: {loss_type}")
 
@@ -114,6 +136,13 @@ def weighted_mean(losses, sample_weights, eps=1e-8):
         tf.reduce_sum(sample_weights), tf.constant(eps, dtype=tf.float32)
     )
     return numerator / denominator
+
+
+def get_listwise_sample_weights(model, losses, num_neg):
+    if not hasattr(model, "sample_weights"):
+        return tf.ones_like(losses, dtype=tf.float32)
+    sample_weights = tf.reshape(model.sample_weights, [-1, num_neg + 1])
+    return tf.reduce_mean(sample_weights, axis=1)
 
 
 # focal loss for binary cross entropy based on [Lin et al., 2018](https://arxiv.org/pdf/1708.02002.pdf)
@@ -137,6 +166,57 @@ def softmax_cross_entropy(model, user_embeds, item_embeds, all_adjust=True):
     logits = model.adjust_logits(logits, all_adjust)
     labels = tf.range(tf.shape(user_embeds)[0])
     return tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
+
+
+def listnet_loss(scores, labels, num_neg, temperature):
+    scores, labels = reshape_sampled_listwise_inputs(scores, labels, num_neg)
+    temperature = validate_listwise_temperature(temperature, "listnet_temperature")
+    logits = scores / temperature
+    target_probs = tf.nn.softmax(labels, axis=1)
+    pred_log_probs = tf.nn.log_softmax(logits, axis=1)
+    return -tf.reduce_sum(target_probs * pred_log_probs, axis=1)
+
+
+def approx_ndcg_loss(scores, labels, num_neg, temperature):
+    scores, labels = reshape_sampled_listwise_inputs(scores, labels, num_neg)
+    temperature = validate_listwise_temperature(
+        temperature, "approx_ndcg_temperature"
+    )
+    gains = tf.pow(2.0, labels) - 1.0
+    approx_ranks = approximate_ranks(scores, temperature)
+    discounts = _discount(approx_ranks)
+    dcg = tf.reduce_sum(gains * discounts, axis=1)
+
+    sorted_gains = tf.sort(gains, axis=1, direction="DESCENDING")
+    list_size = tf.shape(scores)[1]
+    ideal_ranks = tf.cast(tf.range(list_size) + 1, tf.float32)[tf.newaxis, :]
+    idcg = tf.reduce_sum(sorted_gains * _discount(ideal_ranks), axis=1)
+    approx_ndcg = tf.math.divide_no_nan(dcg, idcg)
+    return tf.where(idcg > 0.0, 1.0 - approx_ndcg, tf.zeros_like(approx_ndcg))
+
+
+def reshape_sampled_listwise_inputs(scores, labels, num_neg):
+    if not num_neg or num_neg < 1:
+        raise ValueError("Sampled listwise losses require `num_neg` to be a positive integer")
+    list_size = num_neg + 1
+    scores = tf.reshape(scores, [-1, list_size])
+    labels = tf.reshape(labels, [-1, list_size])
+    return scores, labels
+
+
+def validate_listwise_temperature(temperature, name):
+    if temperature <= 0.0:
+        raise ValueError(f"`{name}` must be positive, got `{temperature}`")
+    return tf.constant(temperature, dtype=tf.float32)
+
+
+def approximate_ranks(scores, temperature):
+    score_i = scores[:, :, tf.newaxis]
+    score_j = scores[:, tf.newaxis, :]
+    diff = (score_j - score_i) / temperature
+    pairwise_probs = tf.sigmoid(diff)
+    mask = 1.0 - tf.eye(tf.shape(scores)[1], dtype=tf.float32)[tf.newaxis, :, :]
+    return 1.0 + tf.reduce_sum(pairwise_probs * mask, axis=2)
 
 
 def sampled_lambdarank_loss(output_pos, output_neg, pairwise_logits, num_neg):

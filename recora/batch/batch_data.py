@@ -7,7 +7,11 @@ from .collators import BaseCollator as NormalCollator
 from .collators import PairwiseCollator, PointwiseCollator, SparseCollator, set_worker_seed
 from ..utils.constants import FeatModels
 from ..utils.misc import transform_seed
-from ..utils.validate import is_listwise_training
+from ..utils.validate import (
+    POINTWISE_LOSSES,
+    SAMPLED_LISTWISE_LOSSES,
+    is_inbatch_listwise_training,
+)
 
 
 class BatchData:
@@ -137,16 +141,16 @@ def get_collate_fn(model, neg_sampling):
         return NormalCollator(model, data_info, separate_features)
     if model.task == "rating" or not neg_sampling:
         return NormalCollator(model, data_info, separate_features)
-    if model.loss_type in ("cross_entropy", "focal"):
+    if model.loss_type in POINTWISE_LOSSES + SAMPLED_LISTWISE_LOSSES:
         return PointwiseCollator(model, data_info, separate_features)
     return PairwiseCollator(model, data_info, repeat_positives=True)
 
 
 def adjust_batch_size(model, original_batch_size):
-    if is_listwise_training(model):
+    if is_inbatch_listwise_training(model):
         return original_batch_size
     if model.sampler is not None:
-        if model.loss_type in ("cross_entropy", "focal"):
+        if model.loss_type in POINTWISE_LOSSES + SAMPLED_LISTWISE_LOSSES:
             return max(1, int(original_batch_size / (model.num_neg + 1)))
         return max(1, int(original_batch_size / model.num_neg))
     return original_batch_size

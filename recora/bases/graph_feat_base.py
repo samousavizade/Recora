@@ -76,7 +76,7 @@ class GraphFeatBase(DynEmbedBase):
     def build_placeholders(self):
         self.user_indices = tf.placeholder(tf.int32, shape=[None])
         self.item_indices = tf.placeholder(tf.int32, shape=[None])
-        if self.loss_type == "cross_entropy":
+        if self.loss_type in ("cross_entropy", "listnet", "approx_ndcg"):
             self.labels = tf.placeholder(tf.float32, shape=[None])
         if self.loss_type == "max_margin":
             self.item_indices_neg = tf.placeholder(tf.int32, shape=[None])

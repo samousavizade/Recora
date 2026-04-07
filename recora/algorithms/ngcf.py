@@ -27,6 +27,8 @@ class NGCF(GraphEmbedBase):
         num_neg=1,
         seed=42,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         layer_sizes = hidden_units_config(layer_sizes)
         if any(size <= 0 for size in layer_sizes):
@@ -42,11 +44,21 @@ class NGCF(GraphEmbedBase):
 
         if task != "ranking":
             raise ValueError("`NGCF` is only suitable for ranking")
-        if loss_type not in ("cross_entropy", "focal", "ranknet", "bpr", "lambdarank"):
+        if loss_type not in (
+            "cross_entropy",
+            "focal",
+            "ranknet",
+            "bpr",
+            "lambdarank",
+            "listnet",
+            "approx_ndcg",
+        ):
             raise ValueError(f"unsupported `loss_type`: `{loss_type}`")
 
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.layer_sizes = layer_sizes
         self.node_dropout_rate = dropout_config(node_dropout_rate)
         self.message_dropout_rate = dropout_config(message_dropout_rate)

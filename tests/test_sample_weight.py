@@ -160,6 +160,77 @@ def test_choose_tf_loss_weighted_softmax():
     assert loss == pytest.approx(np.log1p(np.exp(-1.0)))
 
 
+def test_choose_tf_loss_weighted_listnet_and_zero_weights():
+    tf.reset_default_graph()
+    weighted_model = SimpleNamespace(
+        model_name="Dummy",
+        labels=tf.constant([1.0, 0.0, 1.0, 0.0], dtype=tf.float32),
+        output=tf.constant([0.0, 0.0, 3.0, -3.0], dtype=tf.float32),
+        sample_weights=tf.constant([2.0, 2.0, 0.0, 0.0], dtype=tf.float32),
+        num_neg=1,
+        listnet_temperature=1.0,
+    )
+    zero_weight_model = SimpleNamespace(
+        model_name="Dummy",
+        labels=tf.constant([1.0, 0.0, 1.0, 0.0], dtype=tf.float32),
+        output=tf.constant([0.0, 0.0, 3.0, -3.0], dtype=tf.float32),
+        sample_weights=tf.constant([0.0, 0.0, 0.0, 0.0], dtype=tf.float32),
+        num_neg=1,
+        listnet_temperature=1.0,
+    )
+
+    with tf.Session() as sess:
+        weighted_loss, zero_loss = sess.run(
+            [
+                choose_tf_loss(weighted_model, "ranking", "listnet"),
+                choose_tf_loss(zero_weight_model, "ranking", "listnet"),
+            ]
+        )
+
+    assert weighted_loss == pytest.approx(np.log(2.0))
+    assert zero_loss == pytest.approx(0.0)
+
+
+def test_choose_tf_loss_approx_ndcg_prefers_better_rankings_and_zero_weights():
+    tf.reset_default_graph()
+    better_model = SimpleNamespace(
+        model_name="Dummy",
+        labels=tf.constant([1.0, 0.0, 1.0, 0.0], dtype=tf.float32),
+        output=tf.constant([2.0, 0.0, 2.0, 0.0], dtype=tf.float32),
+        sample_weights=tf.constant([1.0, 1.0, 1.0, 1.0], dtype=tf.float32),
+        num_neg=1,
+        approx_ndcg_temperature=1.0,
+    )
+    worse_model = SimpleNamespace(
+        model_name="Dummy",
+        labels=tf.constant([1.0, 0.0, 1.0, 0.0], dtype=tf.float32),
+        output=tf.constant([0.0, 2.0, 0.0, 2.0], dtype=tf.float32),
+        sample_weights=tf.constant([1.0, 1.0, 1.0, 1.0], dtype=tf.float32),
+        num_neg=1,
+        approx_ndcg_temperature=1.0,
+    )
+    zero_weight_model = SimpleNamespace(
+        model_name="Dummy",
+        labels=tf.constant([1.0, 0.0, 1.0, 0.0], dtype=tf.float32),
+        output=tf.constant([2.0, 0.0, 2.0, 0.0], dtype=tf.float32),
+        sample_weights=tf.constant([0.0, 0.0, 0.0, 0.0], dtype=tf.float32),
+        num_neg=1,
+        approx_ndcg_temperature=1.0,
+    )
+
+    with tf.Session() as sess:
+        better_loss, worse_loss, zero_loss = sess.run(
+            [
+                choose_tf_loss(better_model, "ranking", "approx_ndcg"),
+                choose_tf_loss(worse_model, "ranking", "approx_ndcg"),
+                choose_tf_loss(zero_weight_model, "ranking", "approx_ndcg"),
+            ]
+        )
+
+    assert better_loss < worse_loss
+    assert zero_loss == pytest.approx(0.0)
+
+
 @pytest.mark.parametrize("loss_type", ["nce", "sampled_softmax"])
 def test_youtube_retrieval_weighted_losses_are_finite(loss_type):
     tf.reset_default_graph()
@@ -168,6 +239,7 @@ def test_youtube_retrieval_weighted_losses_are_finite(loss_type):
         sess=tf.Session(),
         data_info=SimpleNamespace(data_size=2),
         n_items=4,
+        norm_embed=False,
         item_indices=tf.placeholder(tf.int64, shape=[None]),
         user_embeds=tf.Variable([[1.0, 0.0], [0.0, 1.0]], dtype=tf.float32),
         item_embeds=tf.Variable(

@@ -17,7 +17,7 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'focal', 'bpr'}, default: 'cross_entropy'
+    loss_type : {'cross_entropy', 'focal', 'bpr', 'listnet', 'approx_ndcg'}, default: 'cross_entropy'
         Loss for model training.
     rnn_type : {'lstm', 'gru'}, default: 'gru'
         RNN for modeling.
@@ -111,6 +111,8 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         seed=42,
         lower_upper_bound=None,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         super().__init__(
             task,
@@ -124,6 +126,8 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         )
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.rnn_type = rnn_type.lower()
         self.n_epochs = n_epochs
         self.lr = lr
@@ -142,9 +146,16 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
     def _check_params(self):
         if self.rnn_type not in ("lstm", "gru"):
             raise ValueError("`rnn_type` must either be `lstm` or `gru`")
-        if self.loss_type not in ("cross_entropy", "bpr", "focal"):
+        if self.loss_type not in (
+            "cross_entropy",
+            "bpr",
+            "focal",
+            "listnet",
+            "approx_ndcg",
+        ):
             raise ValueError(
-                "`loss_type` must be one of (`cross_entropy`, `focal`, `bpr`)"
+                "`loss_type` must be one of "
+                "(`cross_entropy`, `focal`, `bpr`, `listnet`, `approx_ndcg`)"
             )
 
     def build_model(self):
@@ -153,7 +164,12 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         self._build_variables()
         self.user_embeds = self._build_user_embeddings()
         self.serving_topk = self.build_topk()
-        if self.task == "rating" or self.loss_type in ("cross_entropy", "focal"):
+        if self.task == "rating" or self.loss_type in (
+            "cross_entropy",
+            "focal",
+            "listnet",
+            "approx_ndcg",
+        ):
             self.item_indices = tf.placeholder(tf.int32, shape=[None])
             self.labels = tf.placeholder(tf.float32, shape=[None])
             user_embeds = self.user_embeds

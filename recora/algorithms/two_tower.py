@@ -23,7 +23,7 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         Recommendation task. See :ref:`Task`.
     data_info : :class:`~recora.data.DataInfo` object
         Object that contains useful information for training and inference.
-    loss_type : {'cross_entropy', 'max_margin', 'softmax'}, default: 'softmax'
+    loss_type : {'cross_entropy', 'max_margin', 'softmax', 'listnet', 'approx_ndcg'}, default: 'softmax'
         Loss for model training.
     embed_size: int, default: 16
         Vector size of embeddings.
@@ -135,11 +135,15 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         alpha=0.2,
         seed=42,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         super().__init__(task, data_info, embed_size, norm_embed)
 
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.n_epochs = n_epochs
         self.lr = lr
         self.lr_decay = lr_decay
@@ -167,7 +171,13 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
     def _check_params(self):
         if self.task != "ranking":
             raise ValueError("`TwoTower` is only suitable for ranking")
-        if self.loss_type not in ("cross_entropy", "max_margin", "softmax"):
+        if self.loss_type not in (
+            "cross_entropy",
+            "max_margin",
+            "softmax",
+            "listnet",
+            "approx_ndcg",
+        ):
             raise ValueError(f"Unsupported `loss_type`: `{self.loss_type}`")
         if self.ssl_pattern is not None:
             if self.ssl_pattern not in ("rfm", "rfm-complementary", "cfm"):
@@ -192,7 +202,7 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         self.user_embeds = self.compute_user_embeddings("user")
         self.item_embeds = self.compute_item_embeddings("item")
         self.serving_topk = self.build_topk()
-        if self.loss_type == "cross_entropy":
+        if self.loss_type in ("cross_entropy", "listnet", "approx_ndcg"):
             self.output = tf.reduce_sum(self.user_embeds * self.item_embeds, axis=1)
         if self.loss_type == "max_margin":
             self.item_embeds_neg = self.compute_item_embeddings("item_neg")
@@ -205,7 +215,7 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
     def _build_placeholders(self):
         self.user_indices = tf.placeholder(tf.int32, shape=[None])
         self.item_indices = tf.placeholder(tf.int32, shape=[None])
-        if self.loss_type == "cross_entropy":
+        if self.loss_type in ("cross_entropy", "listnet", "approx_ndcg"):
             self.labels = tf.placeholder(tf.float32, shape=[None])
         if self.loss_type == "max_margin":
             self.item_indices_neg = tf.placeholder(tf.int32, shape=[None])

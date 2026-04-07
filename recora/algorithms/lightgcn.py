@@ -25,6 +25,8 @@ class LightGCN(GraphEmbedBase):
         num_neg=1,
         seed=42,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         super().__init__(
             task=task,
@@ -36,13 +38,23 @@ class LightGCN(GraphEmbedBase):
 
         if task != "ranking":
             raise ValueError("`LightGCN` is only suitable for ranking")
-        if loss_type not in ("cross_entropy", "focal", "ranknet", "bpr", "lambdarank"):
+        if loss_type not in (
+            "cross_entropy",
+            "focal",
+            "ranknet",
+            "bpr",
+            "lambdarank",
+            "listnet",
+            "approx_ndcg",
+        ):
             raise ValueError(f"unsupported `loss_type`: `{loss_type}`")
         if not isinstance(n_layers, int) or n_layers <= 0:
             raise ValueError(f"`n_layers` must be a positive integer, got `{n_layers}`")
 
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.n_layers = n_layers
         self.n_epochs = n_epochs
         self.lr = lr

@@ -3,6 +3,10 @@ import numpy as np
 from ..utils.misc import colorize
 from .constants import TfTrainModels
 
+POINTWISE_LOSSES = ("cross_entropy", "focal")
+PAIRWISE_LOSSES = ("bpr", "ranknet", "lambdarank", "max_margin")
+SAMPLED_LISTWISE_LOSSES = ("listnet", "approx_ndcg")
+
 
 def check_unknown(model, user, item):
     unknown_user_indices = list(np.where(user == model.n_users)[0])
@@ -126,7 +130,7 @@ def check_neg_sampling(model, neg_sampling):
         raise ValueError("`rating` task should not use negative sampling")
     if (
         hasattr(model, "loss_type")
-        and model.loss_type in ("bpr", "ranknet", "lambdarank", "max_margin")
+        and model.loss_type in PAIRWISE_LOSSES + SAMPLED_LISTWISE_LOSSES
         and not neg_sampling
     ):
         raise ValueError(f"`{model.loss_type}` loss must use negative sampling.")
@@ -171,10 +175,18 @@ def check_sample_weight_support(model, train_data):
     )
 
 
-def is_listwise_training(model):
+def is_inbatch_listwise_training(model):
     if model.model_name == "YouTubeRetrieval" or (
         getattr(model, "separate_features", False) and model.loss_type == "softmax"
     ):
         return True
     else:
         return False
+
+
+def is_sampled_listwise_training(model):
+    return getattr(model, "loss_type", None) in SAMPLED_LISTWISE_LOSSES
+
+
+def is_listwise_training(model):
+    return is_inbatch_listwise_training(model) or is_sampled_listwise_training(model)

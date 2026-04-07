@@ -39,6 +39,8 @@ class GraphSage(GraphFeatBase):
         multi_sparse_combiner="sqrtn",
         seed=42,
         tf_sess_config=None,
+        listnet_temperature=1.0,
+        approx_ndcg_temperature=1.0,
     ):
         super().__init__(
             task=task,
@@ -58,10 +60,18 @@ class GraphSage(GraphFeatBase):
         )
         if task != "ranking":
             raise ValueError("`GraphSage` is only suitable for ranking")
-        if loss_type not in ("cross_entropy", "max_margin", "softmax"):
+        if loss_type not in (
+            "cross_entropy",
+            "max_margin",
+            "softmax",
+            "listnet",
+            "approx_ndcg",
+        ):
             raise ValueError(f"Unsupported `loss_type`: `{loss_type}`")
         self.all_args = locals()
         self.loss_type = loss_type
+        self.listnet_temperature = listnet_temperature
+        self.approx_ndcg_temperature = approx_ndcg_temperature
         self.n_epochs = n_epochs
         self.lr = lr
         self.lr_decay = lr_decay
@@ -121,7 +131,7 @@ class GraphSage(GraphFeatBase):
         self.serving_user_embeds = self.build_query_tower(self.final_item_embeds)
         self.user_embeds = self.serving_user_embeds
         self.item_embeds = tf.nn.embedding_lookup(self.final_item_embeds, self.item_indices)
-        if self.loss_type == "cross_entropy":
+        if self.loss_type in ("cross_entropy", "listnet", "approx_ndcg"):
             self.output = tf.reduce_sum(self.user_embeds * self.item_embeds, axis=1)
         elif self.loss_type == "max_margin":
             self.item_embeds_neg = tf.nn.embedding_lookup(
