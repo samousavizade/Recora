@@ -6,7 +6,7 @@ from .dyn_embed_base import DynEmbedBase
 from ..graph import build_tf_sparse_tensor
 from ..layers import dense_nn, normalize_embeds
 from ..tfops import dropout_config, rebuild_tf_model, reg_config, tf
-from ..tfops.features import compute_dense_feats, compute_sparse_feats, get_feed_dict
+from ..tfops.features import compute_sparse_feats, get_feed_dict
 from ..utils.misc import hidden_units_config
 from ..utils.validate import (
     check_multi_sparse,
@@ -63,6 +63,8 @@ class GraphFeatBase(DynEmbedBase):
         self.item_dense = False
         self.has_item_sparse_feats = bool(data_info.item_sparse_col.name)
         self.has_item_dense_feats = bool(data_info.item_dense_col.name)
+        self.user_dense_field_size = len(data_info.user_dense_col.name)
+        self.item_dense_field_size = len(data_info.item_dense_col.name)
         if self.user_sparse or self.has_item_sparse_feats:
             self.sparse_feature_size = sparse_feat_size(data_info)
             self.multi_sparse_combiner = check_multi_sparse(
@@ -142,14 +144,9 @@ class GraphFeatBase(DynEmbedBase):
             )
             concat_embeds.append(sparse_embed)
         if dense_values is not None:
-            dense_embed = compute_dense_feats(
+            dense_embed = self._compute_dense_feats(
                 dense_values,
-                var_name="dense_embeds_var",
-                var_shape=(self.dense_field_size, self.embed_size),
-                initializer=tf.glorot_uniform_initializer(),
-                regularizer=self.reg,
-                reuse_layer=reuse_layer,
-                flatten=True,
+                self.data_info.user_dense_col.index,
             )
             concat_embeds.append(dense_embed)
         user_inputs = (
@@ -187,14 +184,9 @@ class GraphFeatBase(DynEmbedBase):
             )
             concat_embeds.append(sparse_embed)
         if dense_values is not None:
-            dense_embed = compute_dense_feats(
+            dense_embed = self._compute_dense_feats(
                 dense_values,
-                var_name="dense_embeds_var",
-                var_shape=(self.dense_field_size, self.embed_size),
-                initializer=tf.glorot_uniform_initializer(),
-                regularizer=self.reg,
-                reuse_layer=reuse_layer,
-                flatten=True,
+                self.data_info.item_dense_col.index,
             )
             concat_embeds.append(dense_embed)
         item_inputs = (
@@ -284,6 +276,15 @@ class GraphFeatBase(DynEmbedBase):
 
     def build_sparse_graph(self, indices, values, shape):
         return build_tf_sparse_tensor(indices, values, shape)
+
+    def _compute_dense_feats(self, dense_values, dense_col_indices):
+        batch_size = tf.shape(dense_values)[0]
+        dense_embed = tf.gather(
+            self.dense_embeds_var, dense_col_indices, axis=0
+        )
+        dense_embed = tf.expand_dims(dense_embed, axis=0)
+        dense_embed = tf.tile(dense_embed, [batch_size, 1, 1])
+        return tf.keras.layers.Flatten()(dense_values[:, :, tf.newaxis] * dense_embed)
 
     def adjust_logits(self, logits, all_adjust=True):
         if self.use_correction and all_adjust:
