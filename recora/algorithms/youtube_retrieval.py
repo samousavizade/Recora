@@ -133,7 +133,7 @@ class YouTubeRetrieval(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         super().__init__(task, data_info, embed_size, norm_embed)
 
         assert task == "ranking", "YouTube-type models is only suitable for ranking"
-        if len(data_info.item_feature_columns) > 0:
+        if len(data_info.item_col) > 0:
             raise ValueError("The `YouTuBeRetrieval` model assumes no item features.")
         self.all_args = locals()
         self.loss_type = loss_type
