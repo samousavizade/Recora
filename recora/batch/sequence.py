@@ -3,12 +3,19 @@ import random
 import numpy as np
 
 
-def get_sparse_interacted(user_indices, item_indices, user_consumed, mode, num, np_rng):
+def get_sparse_interacted(
+    user_indices, item_indices, user_consumed, mode, num, np_rng, user_consumed_pos=None
+):
     interacted_indices = []
     interacted_items = []
     for j, (u, i) in enumerate(zip(user_indices, item_indices)):
         consumed_items = user_consumed[u]
-        position = consumed_items.index(i)
+        consumed_pos = None if user_consumed_pos is None else user_consumed_pos[u]
+        position = (
+            consumed_items.index(i)
+            if consumed_pos is None
+            else consumed_pos.get(i, consumed_items.index(i))
+        )
         if position == 0:  # first item, no history interaction
             continue
         elif position < num:
@@ -39,6 +46,7 @@ def get_interacted_seqs(
     max_seq_len,
     user_consumed_set,
     np_rng,
+    user_consumed_pos=None,
 ):
     batch_size = len(user_indices)
     seqs = np.full((batch_size, max_seq_len), pad_index, dtype=np.int32)
@@ -47,9 +55,14 @@ def get_interacted_seqs(
         consumed_items = user_consumed[u]
         consumed_len = len(consumed_items)
         consumed_set = user_consumed_set[u]
+        consumed_pos = None if user_consumed_pos is None else user_consumed_pos[u]
         # If `i` is a negative item, sample sequence from user's past interaction
         position = (
-            consumed_items.index(i)
+            (
+                consumed_items.index(i)
+                if consumed_pos is None
+                else consumed_pos.get(i, consumed_items.index(i))
+            )
             if i in consumed_set
             else random.randrange(0, consumed_len)
         )
@@ -99,6 +112,7 @@ def get_dual_seqs(
     long_max_len,
     short_max_len,
     user_consumed_set,
+    user_consumed_pos=None,
 ):
     batch_size = len(user_indices)
     long_seqs = np.full((batch_size, long_max_len), pad_index, dtype=np.int32)
@@ -109,9 +123,14 @@ def get_dual_seqs(
         consumed_items = user_consumed[u]
         consumed_len = len(consumed_items)
         consumed_set = user_consumed_set[u]
+        consumed_pos = None if user_consumed_pos is None else user_consumed_pos[u]
         # If `i` is a negative item, sample sequence from user's past interaction
         position = (
-            consumed_items.index(i)
+            (
+                consumed_items.index(i)
+                if consumed_pos is None
+                else consumed_pos.get(i, consumed_items.index(i))
+            )
             if i in consumed_set
             else random.randrange(0, consumed_len)
         )

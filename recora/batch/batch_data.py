@@ -4,12 +4,20 @@ import multiprocessing as mp
 import numpy as np
 
 from .collators import BaseCollator as NormalCollator
-from .collators import PairwiseCollator, PointwiseCollator, SparseCollator, set_worker_seed
+from .collators import (
+    GraphSageSamplingCollator,
+    PairwiseCollator,
+    PointwiseCollator,
+    SampledListwiseCollator,
+    SparseCollator,
+    set_worker_seed,
+)
 from ..utils.constants import FeatModels
 from ..utils.misc import transform_seed
 from ..utils.validate import (
     POINTWISE_LOSSES,
     SAMPLED_LISTWISE_LOSSES,
+    get_sampled_list_size,
     is_inbatch_listwise_training,
 )
 
@@ -128,29 +136,45 @@ class BatchLoader:
 def get_batch_loader(model, data, neg_sampling, batch_size, shuffle, num_workers, seed):
     use_features = True if FeatModels.contains(model.model_name) else False
     batch_data = BatchData(data, use_features)
-    collate_fn = get_collate_fn(model, neg_sampling)
+    collate_fn = get_collate_fn(model, neg_sampling, data=data)
     return BatchLoader(batch_data, batch_size, shuffle, collate_fn, num_workers, seed)
 
 
-def get_collate_fn(model, neg_sampling):
+def get_collate_fn(model, neg_sampling, data=None):
     model_name, data_info = model.model_name, model.data_info
     separate_features = True if getattr(model, "separate_features", False) else False
     if model_name == "YouTubeRetrieval":
-        return SparseCollator(model, data_info)
-    if separate_features and model.loss_type == "softmax":
-        return NormalCollator(model, data_info, separate_features)
-    if model.task == "rating" or not neg_sampling:
-        return NormalCollator(model, data_info, separate_features)
-    if model.loss_type in POINTWISE_LOSSES + SAMPLED_LISTWISE_LOSSES:
-        return PointwiseCollator(model, data_info, separate_features)
-    return PairwiseCollator(model, data_info, repeat_positives=True)
+        collator = SparseCollator(model, data_info)
+    elif separate_features and model.loss_type == "softmax":
+        collator = NormalCollator(model, data_info, separate_features)
+    elif model.task == "rating" or not neg_sampling:
+        collator = NormalCollator(model, data_info, separate_features)
+    elif model.loss_type in POINTWISE_LOSSES:
+        collator = PointwiseCollator(model, data_info, separate_features)
+    elif model.loss_type in SAMPLED_LISTWISE_LOSSES:
+        label_lookup = data.sparse_interaction if data is not None else None
+        collator = SampledListwiseCollator(
+            model,
+            data_info,
+            label_lookup=label_lookup,
+            separate_features=separate_features,
+        )
+    else:
+        collator = PairwiseCollator(model, data_info, repeat_positives=True)
+
+    if model_name == "GraphSage" and getattr(model, "neighbor_sampling", False):
+        return GraphSageSamplingCollator(model, collator)
+    return collator
 
 
 def adjust_batch_size(model, original_batch_size):
     if is_inbatch_listwise_training(model):
         return original_batch_size
     if model.sampler is not None:
-        if model.loss_type in POINTWISE_LOSSES + SAMPLED_LISTWISE_LOSSES:
+        if model.loss_type in POINTWISE_LOSSES:
             return max(1, int(original_batch_size / (model.num_neg + 1)))
+        if model.loss_type in SAMPLED_LISTWISE_LOSSES:
+            list_size = get_sampled_list_size(model)
+            return max(1, int(original_batch_size / list_size))
         return max(1, int(original_batch_size / model.num_neg))
     return original_batch_size

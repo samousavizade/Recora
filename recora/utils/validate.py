@@ -134,6 +134,12 @@ def check_neg_sampling(model, neg_sampling):
         and not neg_sampling
     ):
         raise ValueError(f"`{model.loss_type}` loss must use negative sampling.")
+    if (
+        hasattr(model, "loss_type")
+        and model.loss_type in SAMPLED_LISTWISE_LOSSES
+        and neg_sampling
+    ):
+        get_sampled_list_size(model)
 
 
 def check_labels(model, labels, neg_sampling):
@@ -190,3 +196,17 @@ def is_sampled_listwise_training(model):
 
 def is_listwise_training(model):
     return is_inbatch_listwise_training(model) or is_sampled_listwise_training(model)
+
+
+def get_sampled_list_size(model):
+    num_neg = getattr(model, "num_neg", None)
+    if not isinstance(num_neg, int) or num_neg < 1:
+        raise ValueError(
+            f"Sampled listwise losses require `num_neg` as a positive integer, got `{num_neg}`"
+        )
+    listwise_num_pos = getattr(model, "listwise_num_pos", 1)
+    if not isinstance(listwise_num_pos, int) or listwise_num_pos < 1:
+        raise ValueError(
+            "`listwise_num_pos` must be a positive integer for sampled listwise losses"
+        )
+    return listwise_num_pos + num_neg

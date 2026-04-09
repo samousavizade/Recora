@@ -1,4 +1,5 @@
 from .version import tf
+from ..utils.validate import get_sampled_list_size
 
 
 def maybe_build_pairwise_scores(model, loss_type):
@@ -95,26 +96,28 @@ def choose_tf_loss(model, task, loss_type):
                 )
                 loss += model.alpha * ssl_loss
         elif loss_type == "listnet":
+            list_size = get_sampled_list_size(model)
             per_group_loss = listnet_loss(
                 model.output,
                 model.labels,
-                model.num_neg,
+                list_size,
                 getattr(model, "listnet_temperature", 1.0),
             )
             loss = weighted_mean(
                 per_group_loss,
-                get_listwise_sample_weights(model, per_group_loss, model.num_neg),
+                get_listwise_sample_weights(model, per_group_loss, list_size),
             )
         elif loss_type == "approx_ndcg":
+            list_size = get_sampled_list_size(model)
             per_group_loss = approx_ndcg_loss(
                 model.output,
                 model.labels,
-                model.num_neg,
+                list_size,
                 getattr(model, "approx_ndcg_temperature", 1.0),
             )
             loss = weighted_mean(
                 per_group_loss,
-                get_listwise_sample_weights(model, per_group_loss, model.num_neg),
+                get_listwise_sample_weights(model, per_group_loss, list_size),
             )
         else:
             raise ValueError(f"unknown loss_type for ranking: {loss_type}")
@@ -138,10 +141,10 @@ def weighted_mean(losses, sample_weights, eps=1e-8):
     return numerator / denominator
 
 
-def get_listwise_sample_weights(model, losses, num_neg):
+def get_listwise_sample_weights(model, losses, list_size):
     if not hasattr(model, "sample_weights"):
         return tf.ones_like(losses, dtype=tf.float32)
-    sample_weights = tf.reshape(model.sample_weights, [-1, num_neg + 1])
+    sample_weights = tf.reshape(model.sample_weights, [-1, list_size])
     return tf.reduce_mean(sample_weights, axis=1)
 
 
@@ -168,8 +171,8 @@ def softmax_cross_entropy(model, user_embeds, item_embeds, all_adjust=True):
     return tf.nn.sparse_softmax_cross_entropy_with_logits(labels=labels, logits=logits)
 
 
-def listnet_loss(scores, labels, num_neg, temperature):
-    scores, labels = reshape_sampled_listwise_inputs(scores, labels, num_neg)
+def listnet_loss(scores, labels, list_size, temperature):
+    scores, labels = reshape_sampled_listwise_inputs(scores, labels, list_size)
     temperature = validate_listwise_temperature(temperature, "listnet_temperature")
     logits = scores / temperature
     target_probs = tf.nn.softmax(labels, axis=1)
@@ -177,8 +180,8 @@ def listnet_loss(scores, labels, num_neg, temperature):
     return -tf.reduce_sum(target_probs * pred_log_probs, axis=1)
 
 
-def approx_ndcg_loss(scores, labels, num_neg, temperature):
-    scores, labels = reshape_sampled_listwise_inputs(scores, labels, num_neg)
+def approx_ndcg_loss(scores, labels, list_size, temperature):
+    scores, labels = reshape_sampled_listwise_inputs(scores, labels, list_size)
     temperature = validate_listwise_temperature(
         temperature, "approx_ndcg_temperature"
     )
@@ -195,10 +198,11 @@ def approx_ndcg_loss(scores, labels, num_neg, temperature):
     return tf.where(idcg > 0.0, 1.0 - approx_ndcg, tf.zeros_like(approx_ndcg))
 
 
-def reshape_sampled_listwise_inputs(scores, labels, num_neg):
-    if not num_neg or num_neg < 1:
-        raise ValueError("Sampled listwise losses require `num_neg` to be a positive integer")
-    list_size = num_neg + 1
+def reshape_sampled_listwise_inputs(scores, labels, list_size):
+    if not isinstance(list_size, int) or list_size <= 1:
+        raise ValueError(
+            "Sampled listwise losses require `list_size` as an integer greater than 1"
+        )
     scores = tf.reshape(scores, [-1, list_size])
     labels = tf.reshape(labels, [-1, list_size])
     return scores, labels

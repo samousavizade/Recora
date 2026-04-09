@@ -8,7 +8,96 @@ from ..utils.misc import count_params
 
 
 class PinSage(GraphFeatBase):
-    """PinSAGE-like graph feature retrieval model."""
+    """*PinSAGE* graph feature retrieval model.
+
+    ``PinSage`` in Recora first constructs a weighted item-item graph from
+    random walks over the user-item interaction graph, then propagates item
+    embeddings on that graph. User representations are produced by the dynamic
+    query tower from :class:`~recora.bases.GraphFeatBase`, so the model can use
+    user features and recent interaction sequences while retrieving against
+    graph-enriched item embeddings.
+
+    Parameters
+    ----------
+    task : {'ranking'}
+        Recommendation task. ``PinSage`` only supports ranking.
+    data_info : :class:`~recora.data.DataInfo` object
+        Object that contains useful information for training and inference.
+    loss_type : {'cross_entropy', 'max_margin', 'softmax', 'listnet', 'approx_ndcg'}, default: 'softmax'
+        Loss for model training.
+    embed_size : int, default: 16
+        Vector size of the base user and item embeddings before graph
+        propagation.
+    hidden_units : int, list of int or tuple of (int,), default: (128, 64)
+        Hidden layer sizes for the feature towers used to build base user/item
+        embeddings and the dynamic query tower.
+    layer_sizes : int, list of int or tuple of (int,), default: (64, 64)
+        Output size of each item-graph propagation layer.
+    neighbor_topk : int, default: 20
+        Maximum number of neighbors kept for each item in the weighted
+        item-item graph.
+    num_walks : int, default: 10
+        Number of random walks launched from each item when estimating
+        neighbor importance.
+    walk_length : int, default: 2
+        Number of alternating item-user-item steps taken in each random walk.
+    restart_prob : float, default: 0.5
+        Probability of jumping back to the source item during random walks.
+    norm_embed : bool, default: False
+        Whether to l2 normalize query embeddings before inference.
+    n_epochs : int, default: 20
+        Number of epochs for training.
+    lr : float, default: 0.001
+        Learning rate for training.
+    lr_decay : bool, default: False
+        Whether to use learning rate decay.
+    epsilon : float, default: 1e-5
+        A small constant added to the denominator to improve numerical
+        stability in Adam optimizer.
+    reg : float or None, default: None
+        Regularization parameter, must be non-negative or None.
+    batch_size : int, default: 256
+        Batch size for training.
+    num_neg : int, default: 1
+        Number of negative samples for each positive sample.
+    sampler : {'random', 'unconsumed', 'popular'}, default: 'random'
+        Negative item sampling strategy used by sampled losses.
+    use_bn : bool, default: True
+        Whether to use batch normalization in the feature towers.
+    dropout_rate : float or None, default: None
+        Dropout rate applied in the feature towers. If it is None, dropout is
+        disabled.
+    recent_num : int or None, default: 10
+        Number of most recent interacted items kept in the dynamic user
+        sequence. If specified, ``random_num`` is ignored.
+    random_num : int or None, default: None
+        Number of randomly sampled interacted items kept in the dynamic user
+        sequence when ``recent_num`` is None.
+    use_correction : bool, default: True
+        Whether to use sampling-bias correction in softmax loss.
+    multi_sparse_combiner : {'sum', 'mean', 'sqrtn'}, default: 'sqrtn'
+        Combiner used for multi-sparse features.
+    seed : int, default: 42
+        Random seed.
+    tf_sess_config : dict or None, default: None
+        Optional TensorFlow session config, see `ConfigProto options
+        <https://github.com/tensorflow/tensorflow/blob/v2.10.0/tensorflow/core/protobuf/config.proto#L431>`_.
+    listnet_temperature : float, default: 1.0
+        Temperature used in ``listnet`` loss.
+    approx_ndcg_temperature : float, default: 1.0
+        Temperature used in ``approx_ndcg`` loss.
+
+    Notes
+    -----
+    The item graph is rebuilt from ``data_info`` whenever the model is created
+    or rebuilt for further training. Random walks estimate item importance, and
+    the final graph keeps only the top weighted neighbors for each source item.
+
+    References
+    ----------
+    [1] *Rex Ying et al.* `Graph Convolutional Neural Networks for Web-Scale
+    Recommender Systems <https://arxiv.org/abs/1806.01973>`_.
+    """
 
     def __init__(
         self,
@@ -41,7 +130,8 @@ class PinSage(GraphFeatBase):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         self.neighbor_topk = neighbor_topk
         self.num_walks = num_walks
         self.walk_length = walk_length
@@ -82,6 +172,7 @@ class PinSage(GraphFeatBase):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.n_epochs = n_epochs
         self.lr = lr
         self.lr_decay = lr_decay

@@ -65,13 +65,16 @@ def test_pure_models_accept_listwise_constructor_params(
         loss_type=loss_type,
         listnet_temperature=0.7,
         approx_ndcg_temperature=0.3,
+        listwise_num_pos=2,
     )
 
     assert model.loss_type == loss_type
     assert model.listnet_temperature == pytest.approx(0.7)
     assert model.approx_ndcg_temperature == pytest.approx(0.3)
+    assert model.listwise_num_pos == 2
     assert model.all_args["listnet_temperature"] == pytest.approx(0.7)
     assert model.all_args["approx_ndcg_temperature"] == pytest.approx(0.3)
+    assert model.all_args["listwise_num_pos"] == 2
 
 
 @pytest.mark.parametrize("loss_type", ["listnet", "approx_ndcg"])
@@ -86,13 +89,16 @@ def test_feat_models_accept_listwise_constructor_params(
         loss_type=loss_type,
         listnet_temperature=0.7,
         approx_ndcg_temperature=0.3,
+        listwise_num_pos=2,
     )
 
     assert model.loss_type == loss_type
     assert model.listnet_temperature == pytest.approx(0.7)
     assert model.approx_ndcg_temperature == pytest.approx(0.3)
+    assert model.listwise_num_pos == 2
     assert model.all_args["listnet_temperature"] == pytest.approx(0.7)
     assert model.all_args["approx_ndcg_temperature"] == pytest.approx(0.3)
+    assert model.all_args["listwise_num_pos"] == 2
 
 
 @pytest.mark.parametrize("loss_type", ["listnet", "approx_ndcg"])
@@ -191,6 +197,30 @@ def test_graphsage_listwise_smoke(feat_data_small, loss_type):
         loss_type=loss_type,
         embed_size=8,
         layer_sizes=(8, 4),
+        n_epochs=1,
+        lr=1e-4,
+        batch_size=64,
+        num_neg=2,
+    )
+    model.fit(train_data, neg_sampling=True, verbose=0, shuffle=True)
+
+    ptest_tf_variables(model)
+    ptest_preds(model, "ranking", pd_data, with_feats=False)
+    ptest_recommends(model, data_info, pd_data, with_feats=True)
+    ptest_dyn_recommends(model, pd_data)
+
+
+def test_graphsage_neighbor_sampling_listwise_smoke(feat_data_small):
+    tf.compat.v1.reset_default_graph()
+    pd_data, train_data, _, data_info = feat_data_small
+    model = GraphSage(
+        "ranking",
+        data_info,
+        loss_type="listnet",
+        embed_size=8,
+        layer_sizes=(8, 4),
+        neighbor_sampling=True,
+        sample_sizes=(3, 2),
         n_epochs=1,
         lr=1e-4,
         batch_size=64,

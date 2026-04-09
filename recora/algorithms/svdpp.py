@@ -83,7 +83,8 @@ class SVDpp(EmbedBase):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         super().__init__(task, data_info, embed_size, lower_upper_bound)
 
         self.all_args = locals()
@@ -91,6 +92,7 @@ class SVDpp(EmbedBase):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.n_epochs = n_epochs
         self.lr = lr
         self.lr_decay = lr_decay

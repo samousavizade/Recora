@@ -43,6 +43,32 @@ def _sparse_feed_dict(model, data: SparseBatch, is_training):
     return feed_dict
 
 
+def _maybe_add_graphsage_sampling_feeds(model, data, feed_dict):
+    graph_data = getattr(data, "graph_data", None)
+    if model.model_name != "GraphSage" or graph_data is None:
+        return feed_dict
+
+    feed_dict.update(
+        {
+            model.sampled_graph_indices: graph_data.graph_indices,
+            model.sampled_graph_values: graph_data.graph_values,
+            model.sampled_user_nodes: graph_data.sampled_user_nodes,
+            model.sampled_item_nodes: graph_data.sampled_item_nodes,
+            model.sampled_node_has_neighbors: graph_data.node_has_neighbors,
+            model.sampled_batch_user_positions: graph_data.user_root_positions,
+            model.sampled_batch_item_positions: graph_data.item_root_positions,
+        }
+    )
+    if (
+        hasattr(model, "sampled_batch_item_neg_positions")
+        and graph_data.item_neg_root_positions is not None
+    ):
+        feed_dict.update(
+            {model.sampled_batch_item_neg_positions: graph_data.item_neg_root_positions}
+        )
+    return feed_dict
+
+
 def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
     if model.model_name == "BPR":
         feed_dict = {
@@ -113,7 +139,7 @@ def _pairwise_feed_dict(model, data: PairwiseBatch, is_training):
         feed_dict.update({model.is_training: is_training})
     if hasattr(model, "sample_weights"):
         feed_dict.update({model.sample_weights: data.sample_weights})
-    return feed_dict
+    return _maybe_add_graphsage_sampling_feeds(model, data, feed_dict)
 
 
 def _pointwise_feed_dict(model, data: PointwiseBatch, is_training):
@@ -139,7 +165,7 @@ def _pointwise_feed_dict(model, data: PointwiseBatch, is_training):
                 model.user_interacted_len: data.seqs.interacted_len,
             }
         )
-    return feed_dict
+    return _maybe_add_graphsage_sampling_feeds(model, data, feed_dict)
 
 
 def _separate_feed_dict(model, data: PointwiseSepFeatBatch, is_training):
@@ -172,7 +198,7 @@ def _separate_feed_dict(model, data: PointwiseSepFeatBatch, is_training):
     if hasattr(model, "ssl_pattern") and model.ssl_pattern is not None:
         ssl_feats = get_ssl_features(model, len(data.items))
         feed_dict.update(ssl_feats)
-    return feed_dict
+    return _maybe_add_graphsage_sampling_feeds(model, data, feed_dict)
 
 
 def _dual_seq_feed_dict(model, data: PointwiseDualSeqBatch, is_training):
@@ -192,7 +218,7 @@ def _dual_seq_feed_dict(model, data: PointwiseDualSeqBatch, is_training):
         feed_dict.update({model.sparse_indices: data.sparse_indices})
     if hasattr(model, "dense") and model.dense:
         feed_dict.update({model.dense_values: data.dense_values})
-    return feed_dict
+    return _maybe_add_graphsage_sampling_feeds(model, data, feed_dict)
 
 
 def _generic_pairwise_feed_dict(model, data: PairwiseBatch):

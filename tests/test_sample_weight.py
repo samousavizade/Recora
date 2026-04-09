@@ -283,6 +283,94 @@ def test_youtube_retrieval_weighted_losses_are_finite(loss_type):
     assert zero_loss == pytest.approx(0.0)
 
 
+@pytest.mark.parametrize("loss_type", ["nce", "sampled_softmax"])
+def test_youtube_retrieval_small_item_vocab_is_handled(loss_type):
+    tf.reset_default_graph()
+    model = SimpleNamespace(
+        model_name="YouTubeRetrieval",
+        sess=tf.Session(),
+        data_info=SimpleNamespace(data_size=2),
+        n_items=2,
+        norm_embed=False,
+        item_indices=tf.placeholder(tf.int64, shape=[None]),
+        user_embeds=tf.Variable([[1.0, 0.0], [0.0, 1.0]], dtype=tf.float32),
+        item_embeds=tf.Variable([[1.0, 0.0], [0.0, 1.0]], dtype=tf.float32),
+        item_biases=tf.Variable(tf.zeros([2], dtype=tf.float32)),
+        seed=42,
+    )
+
+    trainer = YoutubeRetrievalTrainer(
+        model=model,
+        task="ranking",
+        loss_type=loss_type,
+        n_epochs=1,
+        lr=1e-3,
+        lr_decay=False,
+        epsilon=1e-5,
+        batch_size=8,
+        num_sampled_per_batch=8,
+        sampler="uniform",
+        num_neg=None,
+    )
+
+    loss = model.sess.run(
+        trainer.loss,
+        feed_dict={
+            model.item_indices: np.array([0, 1], dtype=np.int64),
+            model.sample_weights: np.array([1.0, 1.0], dtype=np.float32),
+        },
+    )
+    model.sess.close()
+
+    assert trainer.num_sampled_per_batch == 1
+    assert trainer.uses_exact_softmax_loss is False
+    assert np.isfinite(loss)
+
+
+@pytest.mark.parametrize("loss_type", ["nce", "sampled_softmax"])
+def test_youtube_retrieval_single_item_falls_back_to_exact_softmax(loss_type):
+    tf.reset_default_graph()
+    model = SimpleNamespace(
+        model_name="YouTubeRetrieval",
+        sess=tf.Session(),
+        data_info=SimpleNamespace(data_size=2),
+        n_items=1,
+        norm_embed=False,
+        item_indices=tf.placeholder(tf.int64, shape=[None]),
+        user_embeds=tf.Variable([[1.0, 0.0], [0.5, 0.5]], dtype=tf.float32),
+        item_embeds=tf.Variable([[1.0, 0.0]], dtype=tf.float32),
+        item_biases=tf.Variable(tf.zeros([1], dtype=tf.float32)),
+        seed=42,
+    )
+
+    trainer = YoutubeRetrievalTrainer(
+        model=model,
+        task="ranking",
+        loss_type=loss_type,
+        n_epochs=1,
+        lr=1e-3,
+        lr_decay=False,
+        epsilon=1e-5,
+        batch_size=4,
+        num_sampled_per_batch=4,
+        sampler="uniform",
+        num_neg=None,
+    )
+
+    loss = model.sess.run(
+        trainer.loss,
+        feed_dict={
+            model.item_indices: np.array([0, 0], dtype=np.int64),
+            model.sample_weights: np.array([1.0, 1.0], dtype=np.float32),
+        },
+    )
+    model.sess.close()
+
+    assert trainer.num_sampled_per_batch == 0
+    assert trainer.uses_exact_softmax_loss is True
+    assert np.isfinite(loss)
+
+
 def test_non_tf_training_rejects_non_default_sample_weights(pure_data_small):
     pd_data, _, _, _ = pure_data_small
     train_df, _ = split_by_ratio_chrono(pd_data, test_size=0.2)

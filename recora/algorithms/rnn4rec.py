@@ -113,7 +113,8 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         super().__init__(
             task,
             data_info,
@@ -128,6 +129,7 @@ class RNN4Rec(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.rnn_type = rnn_type.lower()
         self.n_epochs = n_epochs
         self.lr = lr

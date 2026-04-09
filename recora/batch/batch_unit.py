@@ -46,17 +46,19 @@ class SparseSeqFeats:
 
 
 @dataclass
-class PointwiseBatch:
-    __slots__ = (
-        "users",
-        "items",
-        "labels",
-        "sample_weights",
-        "sparse_indices",
-        "dense_values",
-        "seqs",
-    )
+class SampledGraphData:
+    graph_indices: Iterable[Iterable[int]]
+    graph_values: Iterable[float]
+    sampled_user_nodes: Iterable[int]
+    sampled_item_nodes: Iterable[int]
+    node_has_neighbors: Iterable[bool]
+    user_root_positions: Iterable[int]
+    item_root_positions: Iterable[int]
+    item_neg_root_positions: Optional[Iterable[int]] = None
 
+
+@dataclass
+class PointwiseBatch:
     users: Iterable[int]
     items: Iterable[int]
     labels: Iterable[float]
@@ -64,6 +66,7 @@ class PointwiseBatch:
     sparse_indices: Optional[Iterable[int]]
     dense_values: Optional[Iterable[float]]
     seqs: Optional[SeqFeats]
+    graph_data: Optional[SampledGraphData] = None
 
 
 @dataclass
@@ -79,21 +82,13 @@ class PointwiseDualSeqBatch(PointwiseBatch):
 
 @dataclass
 class PairwiseBatch:
-    __slots__ = (
-        "queries",
-        "item_pairs",
-        "sample_weights",
-        "sparse_indices",
-        "dense_values",
-        "seqs",
-    )
-
     queries: Iterable[int]
     item_pairs: Tuple[Iterable[int], Iterable[int]]
     sample_weights: Iterable[float]
     sparse_indices: Optional[TripleFeats[int]]
     dense_values: Optional[TripleFeats[float]]
     seqs: Optional[Union[SeqFeats, DualSeqFeats]]
+    graph_data: Optional[SampledGraphData] = None
 
 
 @dataclass

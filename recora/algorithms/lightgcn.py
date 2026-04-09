@@ -6,7 +6,68 @@ from ..utils.misc import count_params
 
 
 class LightGCN(GraphEmbedBase):
-    """*LightGCN* algorithm."""
+    """*LightGCN* algorithm.
+
+    ``LightGCN`` is a graph collaborative filtering model for implicit ranking.
+    It propagates user and item embeddings on the normalized user-item
+    interaction graph and averages the embeddings from all propagation layers,
+    including the input layer. Unlike earlier graph recommenders, it keeps the
+    propagation step intentionally simple and does not apply feature transforms
+    or nonlinear activations inside graph convolution.
+
+    Parameters
+    ----------
+    task : {'ranking'}
+        Recommendation task. ``LightGCN`` only supports ranking.
+    data_info : :class:`~recora.data.DataInfo` object
+        Object that contains useful information for training and inference.
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr', 'lambdarank', 'listnet', 'approx_ndcg'}, default: 'bpr'
+        Loss for model training.
+    embed_size : int, default: 16
+        Vector size of user and item embeddings.
+    n_layers : int, default: 3
+        Number of graph propagation layers. The final embedding is the mean of
+        layer-0 embeddings and the outputs from all ``n_layers`` propagations.
+    n_epochs : int, default: 20
+        Number of epochs for training.
+    lr : float, default: 0.001
+        Learning rate for training.
+    lr_decay : bool, default: False
+        Whether to use learning rate decay.
+    epsilon : float, default: 1e-5
+        A small constant added to the denominator to improve numerical
+        stability in Adam optimizer.
+    reg : float or None, default: None
+        Regularization parameter, must be non-negative or None.
+    batch_size : int, default: 256
+        Batch size for training.
+    sampler : {'random', 'unconsumed', 'popular'}, default: 'random'
+        Negative sampling strategy used by sampled losses.
+    num_neg : int, default: 1
+        Number of negative samples for each positive sample.
+    seed : int, default: 42
+        Random seed.
+    tf_sess_config : dict or None, default: None
+        Optional TensorFlow session config, see `ConfigProto options
+        <https://github.com/tensorflow/tensorflow/blob/v2.10.0/tensorflow/core/protobuf/config.proto#L431>`_.
+    listnet_temperature : float, default: 1.0
+        Temperature used in ``listnet`` loss.
+    approx_ndcg_temperature : float, default: 1.0
+        Temperature used in ``approx_ndcg`` loss.
+
+    Notes
+    -----
+    The interaction graph comes from the bipartite user-item matrix and is
+    normalized by :class:`~recora.bases.GraphEmbedBase`. Training is still done
+    on user-item examples; the graph propagation only affects how embeddings are
+    generated before scoring.
+
+    References
+    ----------
+    [1] *Xiangnan He et al.* `LightGCN: Simplifying and Powering Graph
+    Convolution Network for Recommendation
+    <https://arxiv.org/abs/2002.02126>`_.
+    """
 
     def __init__(
         self,
@@ -27,7 +88,8 @@ class LightGCN(GraphEmbedBase):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         super().__init__(
             task=task,
             data_info=data_info,
@@ -55,6 +117,7 @@ class LightGCN(GraphEmbedBase):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.n_layers = n_layers
         self.n_epochs = n_epochs
         self.lr = lr

@@ -207,31 +207,41 @@ class GraphFeatBase(DynEmbedBase):
 
     def build_full_user_embeddings(self):
         user_indices = tf.range(self.n_users, dtype=tf.int32)
+        return self.build_user_embeddings_from_indices(user_indices)
+
+    def build_full_item_embeddings(self):
+        item_indices = tf.range(self.n_items, dtype=tf.int32)
+        return self.build_item_embeddings_from_indices(item_indices)
+
+    def build_user_embeddings_from_indices(self, user_indices):
         sparse_indices = None
         dense_values = None
         if self.user_sparse:
-            sparse_indices = tf.constant(
-                self.data_info.user_sparse_unique[:-1], dtype=tf.int32
+            sparse_indices = tf.gather(
+                tf.constant(self.data_info.user_sparse_unique[:-1], dtype=tf.int32),
+                user_indices,
             )
         if self.user_dense:
-            dense_values = tf.constant(
-                self.data_info.user_dense_unique[:-1], dtype=tf.float32
+            dense_values = tf.gather(
+                tf.constant(self.data_info.user_dense_unique[:-1], dtype=tf.float32),
+                user_indices,
             )
         return self.compute_user_base_embeddings(
             user_indices, sparse_indices, dense_values, reuse_layer=True
         )
 
-    def build_full_item_embeddings(self):
-        item_indices = tf.range(self.n_items, dtype=tf.int32)
+    def build_item_embeddings_from_indices(self, item_indices):
         sparse_indices = None
         dense_values = None
         if self.has_item_sparse_feats:
-            sparse_indices = tf.constant(
-                self.data_info.item_sparse_unique[:-1], dtype=tf.int32
+            sparse_indices = tf.gather(
+                tf.constant(self.data_info.item_sparse_unique[:-1], dtype=tf.int32),
+                item_indices,
             )
         if self.has_item_dense_feats:
-            dense_values = tf.constant(
-                self.data_info.item_dense_unique[:-1], dtype=tf.float32
+            dense_values = tf.gather(
+                tf.constant(self.data_info.item_dense_unique[:-1], dtype=tf.float32),
+                item_indices,
             )
         return self.compute_item_base_embeddings(
             item_indices, sparse_indices, dense_values, reuse_layer=True

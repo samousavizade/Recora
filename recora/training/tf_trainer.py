@@ -1,3 +1,5 @@
+import warnings
+
 import numpy as np
 from tqdm import tqdm
 
@@ -67,40 +69,44 @@ class TensorFlowTrainer(BaseTrainer):
             num_workers,
             self.model.seed,
         )
-        for epoch in range(1, self.n_epochs + 1):
-            if self.lr_decay and verbose > 0:
-                print(
-                    f"With lr_decay, epoch {epoch} learning rate: "
-                    f"{self.sess.run(self.lr)}"
-                )
-            with time_block(f"Epoch {epoch}", verbose):
-                disable = True if verbose <= 0 else False
-                train_total_loss = []
-                for batch_data in tqdm(data_loader, desc="train", disable=disable):
-                    fetches = (self.loss, self.training_op)
-                    feed_dict = get_tf_feeds(self.model, batch_data, is_training=True)
-                    train_loss, _ = self.sess.run(fetches, feed_dict)
-                    train_total_loss.append(train_loss)
+        try:
+            for epoch in range(1, self.n_epochs + 1):
+                if self.lr_decay and verbose > 0:
+                    print(
+                        f"With lr_decay, epoch {epoch} learning rate: "
+                        f"{self.sess.run(self.lr)}"
+                    )
+                with time_block(f"Epoch {epoch}", verbose):
+                    disable = True if verbose <= 0 else False
+                    train_total_loss = []
+                    for batch_data in tqdm(data_loader, desc="train", disable=disable):
+                        fetches = (self.loss, self.training_op)
+                        feed_dict = get_tf_feeds(self.model, batch_data, is_training=True)
+                        train_loss, _ = self.sess.run(fetches, feed_dict)
+                        train_total_loss.append(train_loss)
 
-            if verbose > 1:
-                train_loss_str = "train_loss: " + str(
-                    round(float(np.mean(train_total_loss)), 4)
-                )
-                print(f"\t {colorize(train_loss_str, 'green')}")
-                # get embedding for evaluation
-                if EmbeddingModels.contains(self.model.model_name):
-                    self.model.set_embeddings()
-                print_metrics(
-                    model=self.model,
-                    neg_sampling=neg_sampling,
-                    eval_data=eval_data,
-                    metrics=metrics,
-                    eval_batch_size=eval_batch_size,
-                    k=k,
-                    sample_user_num=eval_user_num,
-                    seed=self.model.seed,
-                )
-                print("=" * 30)
+                if verbose > 1:
+                    train_loss_str = "train_loss: " + str(
+                        round(float(np.mean(train_total_loss)), 4)
+                    )
+                    print(f"\t {colorize(train_loss_str, 'green')}")
+                    # get embedding for evaluation
+                    if EmbeddingModels.contains(self.model.model_name):
+                        self.model.set_embeddings()
+                    print_metrics(
+                        model=self.model,
+                        neg_sampling=neg_sampling,
+                        eval_data=eval_data,
+                        metrics=metrics,
+                        eval_batch_size=eval_batch_size,
+                        k=k,
+                        sample_user_num=eval_user_num,
+                        seed=self.model.seed,
+                    )
+                    print("=" * 30)
+        finally:
+            if hasattr(data_loader, "close"):
+                data_loader.close()
 
     def _build_train_ops(self, **kwargs):
         self.loss = choose_tf_loss(self.model, self.task, self.loss_type)
@@ -168,10 +174,9 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
         )
 
     def _build_train_ops(self, num_sampled_per_batch, **kwargs):
-        num_sampled_per_batch = (
+        self.uses_exact_softmax_loss = False
+        num_sampled_per_batch = self._resolve_num_sampled_per_batch(
             num_sampled_per_batch
-            if num_sampled_per_batch and num_sampled_per_batch > 0
-            else self.batch_size
         )
         # By default, `sampled_softmax_loss` and `nce_loss` in tensorflow
         # uses `log_uniform_candidate_sampler` to sample negative items,
@@ -185,12 +190,17 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
                 unique=True,
                 range_max=self.model.n_items,
             )
-            if self.sampler == "uniform"
+            if self.sampler == "uniform" and num_sampled_per_batch > 0
             else None
         )
 
         user_embeds, item_embeds, item_biases = self._get_loss_inputs()
-        if self.loss_type == "nce":
+        if num_sampled_per_batch <= 0:
+            self.uses_exact_softmax_loss = True
+            self.loss = self._build_exact_softmax_loss(
+                user_embeds, item_embeds, item_biases
+            )
+        elif self.loss_type == "nce":
             self.loss = weighted_mean(
                 tf.nn.nce_loss(
                     weights=item_embeds,
@@ -243,6 +253,43 @@ class YoutubeRetrievalTrainer(TensorFlowTrainer):
         update_ops = tf.get_collection(tf.GraphKeys.UPDATE_OPS)
         self.training_op = tf.group([optimizer_op, update_ops])
         self.sess.run(tf.global_variables_initializer())
+
+    def _resolve_num_sampled_per_batch(self, num_sampled_per_batch):
+        requested_num_sampled = (
+            num_sampled_per_batch
+            if num_sampled_per_batch and num_sampled_per_batch > 0
+            else self.batch_size
+        )
+        max_num_sampled = max(0, self.model.n_items - 1)
+        effective_num_sampled = min(requested_num_sampled, max_num_sampled)
+        self.num_sampled_per_batch = effective_num_sampled
+
+        if effective_num_sampled != requested_num_sampled:
+            if max_num_sampled == 0:
+                warnings.warn(
+                    "YouTubeRetrieval has fewer than 2 items, so sampled losses "
+                    "fall back to exact softmax for training.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+            else:
+                warnings.warn(
+                    "YouTubeRetrieval reduced `num_sampled_per_batch` from "
+                    f"{requested_num_sampled} to {effective_num_sampled} because "
+                    f"the item vocabulary only has {self.model.n_items} items.",
+                    RuntimeWarning,
+                    stacklevel=2,
+                )
+        return effective_num_sampled
+
+    def _build_exact_softmax_loss(self, user_embeds, item_embeds, item_biases):
+        logits = tf.matmul(user_embeds, item_embeds, transpose_b=True)
+        logits = tf.nn.bias_add(logits, item_biases)
+        losses = tf.nn.sparse_softmax_cross_entropy_with_logits(
+            labels=self.model.item_indices,
+            logits=logits,
+        )
+        return weighted_mean(losses, self.model.sample_weights)
 
     def _get_loss_inputs(self):
         item_biases = self.model.item_biases

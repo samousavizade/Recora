@@ -6,7 +6,71 @@ from ..utils.misc import count_params, hidden_units_config
 
 
 class NGCF(GraphEmbedBase):
-    """*Neural Graph Collaborative Filtering* algorithm."""
+    """*Neural Graph Collaborative Filtering* algorithm.
+
+    ``NGCF`` propagates user and item embeddings on the user-item interaction
+    graph with learnable message passing. Each layer mixes neighborhood messages
+    through a linear sum term and a bi-interaction term, applies a nonlinearity,
+    and concatenates normalized outputs from every layer into the final
+    embedding.
+
+    Parameters
+    ----------
+    task : {'ranking'}
+        Recommendation task. ``NGCF`` only supports ranking.
+    data_info : :class:`~recora.data.DataInfo` object
+        Object that contains useful information for training and inference.
+    loss_type : {'cross_entropy', 'focal', 'ranknet', 'bpr', 'lambdarank', 'listnet', 'approx_ndcg'}, default: 'bpr'
+        Loss for model training.
+    embed_size : int, default: 16
+        Vector size of the initial user and item embeddings.
+    layer_sizes : int, list of int or tuple of (int,), default: (16, 16, 16)
+        Output size of each graph propagation layer. The final embedding
+        dimension is ``embed_size + sum(layer_sizes)`` because all normalized
+        layer outputs are concatenated.
+    node_dropout_rate : float or None, default: None
+        Dropout rate applied to the sparse interaction graph during message
+        passing. If it is None, node dropout is disabled.
+    message_dropout_rate : float or None, default: None
+        Dropout rate applied to layer outputs after nonlinear message passing.
+    n_epochs : int, default: 20
+        Number of epochs for training.
+    lr : float, default: 0.001
+        Learning rate for training.
+    lr_decay : bool, default: False
+        Whether to use learning rate decay.
+    epsilon : float, default: 1e-5
+        A small constant added to the denominator to improve numerical
+        stability in Adam optimizer.
+    reg : float or None, default: None
+        Regularization parameter, must be non-negative or None.
+    batch_size : int, default: 256
+        Batch size for training.
+    sampler : {'random', 'unconsumed', 'popular'}, default: 'random'
+        Negative sampling strategy used by sampled losses.
+    num_neg : int, default: 1
+        Number of negative samples for each positive sample.
+    seed : int, default: 42
+        Random seed.
+    tf_sess_config : dict or None, default: None
+        Optional TensorFlow session config, see `ConfigProto options
+        <https://github.com/tensorflow/tensorflow/blob/v2.10.0/tensorflow/core/protobuf/config.proto#L431>`_.
+    listnet_temperature : float, default: 1.0
+        Temperature used in ``listnet`` loss.
+    approx_ndcg_temperature : float, default: 1.0
+        Temperature used in ``approx_ndcg`` loss.
+
+    Notes
+    -----
+    ``node_dropout_rate`` and ``message_dropout_rate`` control different parts
+    of the model: node dropout sparsifies the interaction graph, while message
+    dropout regularizes dense hidden representations after aggregation.
+
+    References
+    ----------
+    [1] *Xiang Wang et al.* `Neural Graph Collaborative Filtering
+    <https://arxiv.org/abs/1905.08108>`_.
+    """
 
     def __init__(
         self,
@@ -29,7 +93,8 @@ class NGCF(GraphEmbedBase):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         layer_sizes = hidden_units_config(layer_sizes)
         if any(size <= 0 for size in layer_sizes):
             raise ValueError(f"`layer_sizes` must be positive, got `{layer_sizes}`")
@@ -59,6 +124,7 @@ class NGCF(GraphEmbedBase):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.layer_sizes = layer_sizes
         self.node_dropout_rate = dropout_config(node_dropout_rate)
         self.message_dropout_rate = dropout_config(message_dropout_rate)

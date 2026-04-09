@@ -125,7 +125,8 @@ class YouTubeRanking(TfBase, metaclass=ModelMeta):
         tf_sess_config=None,
         listnet_temperature=1.0,
         approx_ndcg_temperature=1.0,
-    ):
+        listwise_num_pos=1,
+):
         super().__init__(task, data_info, lower_upper_bound, tf_sess_config)
 
         assert task == "ranking", "YouTube models is only suitable for ranking"
@@ -133,6 +134,7 @@ class YouTubeRanking(TfBase, metaclass=ModelMeta):
         self.loss_type = loss_type
         self.listnet_temperature = listnet_temperature
         self.approx_ndcg_temperature = approx_ndcg_temperature
+        self.listwise_num_pos = listwise_num_pos
         self.embed_size = embed_size
         self.n_epochs = n_epochs
         self.lr = lr
