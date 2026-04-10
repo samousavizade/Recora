@@ -23,7 +23,10 @@ from recora.batch.collators import (
     merge_columns,
 )
 from recora.data import DatasetFeat
-from recora.sampling.negatives import negatives_from_unconsumed
+from recora.sampling.negatives import (
+    negatives_from_popular_unconsumed,
+    negatives_from_unconsumed,
+)
 from recora.tfops import tf
 
 raw_data = """
@@ -467,3 +470,132 @@ def test_negatives_exceed_sampling_tolerance():
     assert 1 not in negatives[0][:4]
     assert 2 not in negatives[1][:4]
     assert 4 not in negatives[2][:4]
+
+
+def test_popular_unconsumed_negatives_exclude_consumed_and_positive():
+    np_rng = np.random.default_rng(42)
+    users = np.array([0, 1, 2], dtype=np.int32)
+    items = np.array([1, 2, 4], dtype=np.int32)
+    user_consumed_set = {0: {1, 2}, 1: {2, 3}, 2: {1, 2, 3, 4}}
+    n_items = 6
+    num_neg = 4
+    probs = np.array([0.50, 0.20, 0.10, 0.08, 0.07, 0.05], dtype=np.float64)
+    probs /= np.sum(probs)
+    negatives = np.array_split(
+        negatives_from_popular_unconsumed(
+            np_rng=np_rng,
+            user_consumed_set=user_consumed_set,
+            users=users,
+            items_pos=items,
+            n_items=n_items,
+            num_neg=num_neg,
+            probs=probs,
+            tolerance=10,
+        ),
+        len(users),
+    )
+    for user, item, user_negs in zip(users, items, negatives):
+        assert item not in user_negs
+        assert not set(user_negs).intersection(user_consumed_set[int(user)])
+
+
+def test_popular_unconsumed_negatives_are_deterministic_with_seed():
+    users = np.array([0, 0, 1, 1], dtype=np.int32)
+    items = np.array([1, 2, 1, 3], dtype=np.int32)
+    user_consumed_set = {0: {1, 2}, 1: {1, 3}}
+    probs = np.array([0.4, 0.2, 0.2, 0.1, 0.1], dtype=np.float64)
+    probs /= np.sum(probs)
+    negatives_1 = negatives_from_popular_unconsumed(
+        np_rng=np.random.default_rng(7),
+        user_consumed_set=user_consumed_set,
+        users=users,
+        items_pos=items,
+        n_items=5,
+        num_neg=3,
+        probs=probs,
+    )
+    negatives_2 = negatives_from_popular_unconsumed(
+        np_rng=np.random.default_rng(7),
+        user_consumed_set=user_consumed_set,
+        users=users,
+        items_pos=items,
+        n_items=5,
+        num_neg=3,
+        probs=probs,
+    )
+    assert np.array_equal(negatives_1, negatives_2)
+
+
+def test_popular_unconsumed_preserves_popularity_bias():
+    np_rng = np.random.default_rng(11)
+    users = np.zeros(6000, dtype=np.int32)
+    items = np.ones(6000, dtype=np.int32)
+    user_consumed_set = {0: {1}}
+    probs = np.array([0.03, 0.02, 0.10, 0.20, 0.65], dtype=np.float64)
+    probs /= np.sum(probs)
+    negatives = negatives_from_popular_unconsumed(
+        np_rng=np_rng,
+        user_consumed_set=user_consumed_set,
+        users=users,
+        items_pos=items,
+        n_items=5,
+        num_neg=1,
+        probs=probs,
+    )
+    counts = np.bincount(negatives, minlength=5)
+    assert counts[1] == 0
+    assert counts[4] > counts[3] > counts[2] > counts[0]
+
+
+def test_popular_unconsumed_dense_user_exact_fallback():
+    np_rng = np.random.default_rng(1)
+    users = np.zeros(128, dtype=np.int32)
+    items = np.full(128, 3, dtype=np.int32)
+    user_consumed_set = {0: set(range(9))}
+    n_items = 10
+    probs = np.arange(1, n_items + 1, dtype=np.float64)
+    probs /= np.sum(probs)
+    negatives = negatives_from_popular_unconsumed(
+        np_rng=np_rng,
+        user_consumed_set=user_consumed_set,
+        users=users,
+        items_pos=items,
+        n_items=n_items,
+        num_neg=2,
+        probs=probs,
+        tolerance=1,
+    )
+    assert np.all(negatives == 9)
+
+
+@pytest.mark.parametrize(
+    "config_feat_data",
+    [
+        {
+            "sparse_col": ["sex", "genre1"],
+            "dense_col": ["age", "item_dense_col"],
+            "user_col": ["sex", "age"],
+            "item_col": ["genre1", "item_dense_col"],
+        }
+    ],
+    indirect=True,
+)
+@pytest.mark.parametrize("sampler", ["popular_unconsumed", "popular+unconsumed"])
+def test_pointwise_collator_popular_unconsumed_sampler(config_feat_data, sampler):
+    train_data, data_info = config_feat_data
+    model = DIN("ranking", data_info, "cross_entropy", sampler=sampler, num_neg=2)
+    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
+
+    collator = PointwiseCollator(model, data_info)
+    batch = collator(original_data)
+    group_size = model.num_neg + 1
+    item_groups = batch.items.reshape(len(original_data["item"]), group_size)
+    user_groups = batch.users.reshape(len(original_data["item"]), group_size)
+    for group_items, group_users in zip(item_groups, user_groups):
+        pos_item = int(group_items[0])
+        neg_items = group_items[1:]
+        user = int(group_users[0])
+        consumed = set(data_info.user_consumed[user])
+        assert pos_item not in neg_items
+        assert not set(neg_items).intersection(consumed)
+    tf.reset_default_graph()

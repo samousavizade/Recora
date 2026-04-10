@@ -22,6 +22,7 @@ from ..graph import sample_bipartite_neighbors
 from ..sampling import (
     neg_probs_from_frequency,
     negatives_from_popular,
+    negatives_from_popular_unconsumed,
     negatives_from_random,
     negatives_from_unconsumed,
 )
@@ -58,6 +59,8 @@ class BaseCollator:
         self.worker_seed = model.seed
         self.temperature = temperature
         self.user_consumed_set = None
+        self.user_consumed_cache = dict()
+        self.user_unconsumed_cache = dict()
         self.neg_probs = None
         self.np_rng = None
         self.user_consumed_pos = None
@@ -137,6 +140,7 @@ class BaseCollator:
 
     def sample_neg_items(self, batch, sampler, num_neg):
         self._set_random_seeds()
+        sampler = "popular_unconsumed" if sampler == "popular+unconsumed" else sampler
         if sampler == "unconsumed":
             self._set_user_consumed()
             items_neg = negatives_from_unconsumed(
@@ -145,6 +149,20 @@ class BaseCollator:
                 batch["item"],
                 self.n_items,
                 num_neg,
+            )
+        elif sampler == "popular_unconsumed":
+            self._set_user_consumed()
+            self._set_neg_probs()
+            items_neg = negatives_from_popular_unconsumed(
+                self.np_rng,
+                self.user_consumed_set,
+                batch["user"],
+                batch["item"],
+                self.n_items,
+                num_neg,
+                probs=self.neg_probs,
+                user_consumed_cache=self.user_consumed_cache,
+                user_unconsumed_cache=self.user_unconsumed_cache,
             )
         elif sampler == "popular":
             self._set_neg_probs()

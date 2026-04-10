@@ -36,9 +36,17 @@ class BaseTrainer(abc.ABC):
                 f"`num_neg` should be positive and smaller than total items, "
                 f"got {self.num_neg}, {n_items}"
             )
-            if self.sampler not in ("random", "unconsumed", "popular"):
+            if self.sampler not in (
+                "random",
+                "unconsumed",
+                "popular",
+                "popular_unconsumed",
+                "popular+unconsumed",
+            ):
                 raise ValueError(
-                    f"`sampler` must be one of (`random`, `unconsumed`, `popular`), "
+                    f"`sampler` must be one of "
+                    f"(`random`, `unconsumed`, `popular`, `popular_unconsumed`, "
+                    f"`popular+unconsumed`), "
                     f"got {self.sampler}"
                 )
 

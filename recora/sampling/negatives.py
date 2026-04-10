@@ -3,7 +3,7 @@ import random
 
 import numpy as np
 
-    
+
 def _check_invalid_negatives(negatives, items_pos, items=None):
     if items is not None and len(items) > 0:
         invalid_indices = np.union1d(
@@ -40,6 +40,153 @@ def negatives_from_popular(np_rng, n_items, items_pos, num_neg, items=None, prob
         negatives[invalid_indices] = np_rng.choice(
             n_items, size=len(invalid_indices), replace=True, p=probs
         )
+    return negatives
+
+
+def negatives_from_popular_unconsumed(
+    np_rng,
+    user_consumed_set,
+    users,
+    items_pos,
+    n_items,
+    num_neg,
+    probs=None,
+    tolerance=10,
+    user_consumed_cache=None,
+    user_unconsumed_cache=None,
+    cache_item_limit=4096,
+):
+    users = np.asarray(users, dtype=np.int32)
+    items_pos = np.asarray(items_pos, dtype=np.int32)
+    if num_neg > 1:
+        users = np.repeat(users, num_neg)
+        items_pos = np.repeat(items_pos, num_neg)
+
+    negatives = np_rng.choice(n_items, size=len(items_pos), replace=True, p=probs)
+    unique_users, inverse = np.unique(users, return_inverse=True)
+    if len(unique_users) == 1:
+        group_indices = [np.arange(len(users), dtype=np.int32)]
+    else:
+        order = np.argsort(inverse, kind="stable")
+        boundaries = np.flatnonzero(np.diff(inverse[order])) + 1
+        group_indices = np.split(order, boundaries)
+
+    consumed_arrays = []
+    for u in unique_users:
+        user_id = int(u)
+        consumed = None if user_consumed_cache is None else user_consumed_cache.get(user_id)
+        if consumed is None:
+            consumed_set = user_consumed_set[user_id]
+            if consumed_set:
+                consumed = np.fromiter(consumed_set, dtype=np.int32, count=len(consumed_set))
+            else:
+                consumed = np.empty(0, dtype=np.int32)
+            if user_consumed_cache is not None:
+                user_consumed_cache[user_id] = consumed
+        consumed_arrays.append(consumed)
+
+    def invalid_mask():
+        invalid = negatives == items_pos
+        for indices, consumed in zip(group_indices, consumed_arrays):
+            if consumed.size == 0:
+                continue
+            valid_indices = indices[~invalid[indices]]
+            if valid_indices.size == 0:
+                continue
+            invalid[valid_indices] = np.isin(
+                negatives[valid_indices], consumed, assume_unique=False
+            )
+        return invalid
+
+    invalid = invalid_mask()
+    for _ in range(tolerance):
+        if not np.any(invalid):
+            return negatives
+        invalid_indices = np.flatnonzero(invalid)
+        negatives[invalid_indices] = np_rng.choice(
+            n_items, size=len(invalid_indices), replace=True, p=probs
+        )
+        invalid = invalid_mask()
+
+    # For unresolved examples (usually dense users), switch to exact sampling from
+    # user-specific unconsumed items using popularity probabilities.
+    unresolved = np.flatnonzero(invalid)
+    if len(unresolved) == 0:
+        return negatives
+
+    unresolved_users = users[unresolved]
+    unresolved_groups = {}
+    for idx, u in zip(unresolved, unresolved_users):
+        unresolved_groups.setdefault(int(u), []).append(int(idx))
+
+    all_items = np.arange(n_items, dtype=np.int32)
+    for user_id, idx_list in unresolved_groups.items():
+        row_indices = np.asarray(idx_list, dtype=np.int32)
+        cached = (
+            None
+            if user_unconsumed_cache is None
+            else user_unconsumed_cache.get(user_id)
+        )
+        if cached is None:
+            consumed = (
+                user_consumed_cache[user_id]
+                if user_consumed_cache is not None and user_id in user_consumed_cache
+                else np.fromiter(
+                    user_consumed_set[user_id],
+                    dtype=np.int32,
+                    count=len(user_consumed_set[user_id]),
+                )
+            )
+            if len(consumed) == 0:
+                candidates = all_items
+            elif len(consumed) >= n_items:
+                candidates = np.empty(0, dtype=np.int32)
+            else:
+                consumed_mask = np.ones(n_items, dtype=bool)
+                consumed_mask[consumed] = False
+                candidates = np.flatnonzero(consumed_mask).astype(np.int32, copy=False)
+            if len(candidates) > 0:
+                cand_probs = probs[candidates] if probs is not None else None
+                if cand_probs is not None:
+                    cand_prob_sum = float(np.sum(cand_probs))
+                    if cand_prob_sum > 0.0:
+                        cand_probs = cand_probs / cand_prob_sum
+                    else:
+                        cand_probs = None
+            else:
+                cand_probs = None
+            if user_unconsumed_cache is not None and 0 < len(candidates) <= cache_item_limit:
+                user_unconsumed_cache[user_id] = (candidates, cand_probs)
+        else:
+            candidates, cand_probs = cached
+
+        # Remove positive items in this unresolved user-group.
+        pos_items = np.unique(items_pos[row_indices])
+        if len(candidates) > 0 and len(pos_items) > 0:
+            keep = ~np.isin(candidates, pos_items, assume_unique=False)
+            candidates = candidates[keep]
+            if cand_probs is not None:
+                cand_probs = cand_probs[keep]
+                cand_prob_sum = float(np.sum(cand_probs))
+                cand_probs = cand_probs / cand_prob_sum if cand_prob_sum > 0.0 else None
+
+        if len(candidates) == 0:
+            sampled = np_rng.choice(n_items, size=len(row_indices), replace=True, p=probs)
+            same_pos = sampled == items_pos[row_indices]
+            for _ in range(tolerance):
+                if not np.any(same_pos):
+                    break
+                sampled[same_pos] = np_rng.choice(
+                    n_items, size=int(np.sum(same_pos)), replace=True, p=probs
+                )
+                same_pos = sampled == items_pos[row_indices]
+            if np.any(same_pos):
+                sampled[same_pos] = (items_pos[row_indices][same_pos] + 1) % n_items
+            negatives[row_indices] = sampled
+        else:
+            negatives[row_indices] = np_rng.choice(
+                candidates, size=len(row_indices), replace=True, p=cand_probs
+            )
     return negatives
 
 
