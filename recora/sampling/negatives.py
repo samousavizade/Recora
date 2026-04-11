@@ -63,54 +63,37 @@ def negatives_from_popular_unconsumed(
         items_pos = np.repeat(items_pos, num_neg)
 
     negatives = np_rng.choice(n_items, size=len(items_pos), replace=True, p=probs)
-    unique_users, inverse = np.unique(users, return_inverse=True)
-    if len(unique_users) == 1:
-        group_indices = [np.arange(len(users), dtype=np.int32)]
-    else:
-        order = np.argsort(inverse, kind="stable")
-        boundaries = np.flatnonzero(np.diff(inverse[order])) + 1
-        group_indices = np.split(order, boundaries)
+    all_indices = np.arange(len(items_pos), dtype=np.int32)
 
-    consumed_arrays = []
-    for u in unique_users:
-        user_id = int(u)
-        consumed = None if user_consumed_cache is None else user_consumed_cache.get(user_id)
-        if consumed is None:
-            consumed_set = user_consumed_set[user_id]
-            if consumed_set:
-                consumed = np.fromiter(consumed_set, dtype=np.int32, count=len(consumed_set))
-            else:
-                consumed = np.empty(0, dtype=np.int32)
-            if user_consumed_cache is not None:
-                user_consumed_cache[user_id] = consumed
-        consumed_arrays.append(consumed)
+    def find_invalid(indices):
+        if len(indices) == 0:
+            return np.empty(0, dtype=np.int32)
 
-    def invalid_mask():
-        invalid = negatives == items_pos
-        for indices, consumed in zip(group_indices, consumed_arrays):
-            if consumed.size == 0:
-                continue
-            valid_indices = indices[~invalid[indices]]
-            if valid_indices.size == 0:
-                continue
-            invalid[valid_indices] = np.isin(
-                negatives[valid_indices], consumed, assume_unique=False
-            )
-        return invalid
+        same_pos = negatives[indices] == items_pos[indices]
+        invalid_indices = list(indices[same_pos])
+        check_indices = indices[~same_pos]
+        if len(check_indices) == 0:
+            return np.asarray(invalid_indices, dtype=np.int32)
 
-    invalid = invalid_mask()
+        check_users = users[check_indices]
+        check_items = negatives[check_indices]
+        for idx, user_id, sampled_item in zip(check_indices, check_users, check_items):
+            if sampled_item in user_consumed_set[user_id]:
+                invalid_indices.append(idx)
+        return np.asarray(invalid_indices, dtype=np.int32)
+
+    invalid_indices = find_invalid(all_indices)
     for _ in range(tolerance):
-        if not np.any(invalid):
+        if len(invalid_indices) == 0:
             return negatives
-        invalid_indices = np.flatnonzero(invalid)
         negatives[invalid_indices] = np_rng.choice(
             n_items, size=len(invalid_indices), replace=True, p=probs
         )
-        invalid = invalid_mask()
+        invalid_indices = find_invalid(invalid_indices)
 
     # For unresolved examples (usually dense users), switch to exact sampling from
     # user-specific unconsumed items using popularity probabilities.
-    unresolved = np.flatnonzero(invalid)
+    unresolved = invalid_indices
     if len(unresolved) == 0:
         return negatives
 
@@ -137,6 +120,8 @@ def negatives_from_popular_unconsumed(
                     count=len(user_consumed_set[user_id]),
                 )
             )
+            if user_consumed_cache is not None and user_id not in user_consumed_cache:
+                user_consumed_cache[user_id] = consumed
             if len(consumed) == 0:
                 candidates = all_items
             elif len(consumed) >= n_items:
