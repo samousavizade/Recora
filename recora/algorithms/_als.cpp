@@ -9,7 +9,7 @@
             "/openmp"
         ],
         "include_dirs": [
-            "C:\\Users\\PC\\AppData\\Local\\Temp\\pip-build-env-sqtr7ju2\\overlay\\Lib\\site-packages\\numpy\\_core\\include"
+            "C:\\Users\\PC\\AppData\\Local\\Temp\\pip-build-env-b6nyv8bp\\overlay\\Lib\\site-packages\\numpy\\_core\\include"
         ],
         "language": "c++",
         "name": "recora.algorithms._als",

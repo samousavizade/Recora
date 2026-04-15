@@ -6,7 +6,7 @@ import pytest
 
 from recora.algorithms import DIN, FM, RNN4Rec, SIM, SVD, TwoTower
 from recora.batch import get_tf_feeds
-from recora.batch.batch_data import BatchData
+from recora.batch.batch_data import BatchData, get_collate_fn
 from recora.batch.batch_unit import (
     PairFeats,
     PairwiseBatch,
@@ -326,6 +326,33 @@ def test_pairwise_separate_features_collator(config_feat_data):
         assert batch.dense_values.item_pos_feats.shape[1] == item_dense_len
         assert isinstance(batch.dense_values.item_neg_feats, np.ndarray)
         assert batch.dense_values.item_neg_feats.shape[1] == item_dense_len
+    tf.reset_default_graph()
+
+
+@pytest.mark.parametrize(
+    "config_feat_data",
+    [
+        {
+            "sparse_col": ["sex", "genre1"],
+            "dense_col": ["age", "item_dense_col"],
+            "user_col": ["sex", "age"],
+            "item_col": ["genre1", "item_dense_col"],
+        }
+    ],
+    indirect=True,
+)
+def test_two_tower_softmax_uses_separate_pointwise_collator(config_feat_data):
+    train_data, data_info = config_feat_data
+    model = TwoTower("ranking", data_info, "softmax", sampler="random", num_neg=2)
+
+    collate_fn = get_collate_fn(model, neg_sampling=True, data=train_data)
+    original_data = BatchData(train_data, use_features=True)[[11, 7, 2]]
+    batch = collate_fn(original_data)
+
+    assert isinstance(batch, PointwiseSepFeatBatch)
+    assert len(batch.users) == len(batch.items) == len(batch.labels) == 3
+    assert np.array_equal(batch.labels, train_data.labels[[11, 7, 2]])
+    assert isinstance(batch.sparse_indices, PairFeats)
     tf.reset_default_graph()
 
 

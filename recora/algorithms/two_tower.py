@@ -164,6 +164,7 @@ class TwoTower(DynEmbedBase, metaclass=ModelMeta, backend="tensorflow"):
         self.ssl_pattern = ssl_pattern
         self.alpha = alpha
         self.seed = seed
+        self.separate_features = True
         self.user_sparse = True if data_info.user_sparse_col.name else False
         self.item_sparse = True if data_info.item_sparse_col.name else False
         self.user_dense = True if data_info.user_dense_col.name else False

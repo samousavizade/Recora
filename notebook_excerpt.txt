@@ -1,0 +1,930 @@
+
+Cell 20
+----------------------------------------\n# Handle single sparse columns
+for c in user_sparse_features + item_sparse_features:
+	for dataframe in [train_data, eval_data]:
+
+		dataframe[c] = dataframe[c].astype(str).fillna("missing")
+		dataframe.loc[dataframe[c] == "0", c] = "missing"
+
+print("Missing value imputation done ...")
+
+scaler = QuantileTransformer(output_distribution='normal', random_state=42, n_quantiles=25)
+train_data[user_dense_features + item_dense_features] = scaler.fit_transform(train_data[user_dense_features + item_dense_features]).astype(np.float32)
+eval_data[user_dense_features + item_dense_features] = scaler.transform(eval_data[user_dense_features + item_dense_features]).astype(np.float32)
+
+print("Scale done ...")
+
+# train_data['label'] = train_data['sample_weight']\n
+Cell 21
+----------------------------------------\n# train_data['sample_weight'] = 1\n
+Cell 22
+----------------------------------------\ntrain_set, data_info = DatasetFeat.build_trainset(
+	train_data=train_data,
+	user_col=user_sparse_features + user_dense_features,
+	item_col=item_sparse_features + item_dense_features,
+	sparse_col=user_sparse_features + item_sparse_features,
+	dense_col=user_dense_features + item_dense_features,
+	# multi_sparse_col=multi_sparse_col,
+	# pad_val=["missing", "missing"],
+	unique_feat=False,
+	shuffle=False
+)
+
+# train_set, data_info = DatasetFeat.build_trainset(
+# 	train_data=train_data,
+# 	user_col=user_feature_columns,
+# 	item_col=[],
+# 	sparse_col=[c for c in single_sparse_feature_columns if c not in item_feature_columns],
+# 	dense_col=[c for c in dense_feature_columns if c not in item_feature_columns],
+# 	# multi_sparse_col=multi_sparse_col,
+# 	# pad_val=["missing", "missing"],
+# 	unique_feat=False
+# )
+
+eval_set = DatasetFeat.build_testset(eval_data)
+
+print("Transformer dataset generation done ...")
+
+# from recora.data import DatasetPure
+#
+# train_set, data_info = DatasetPure.build_trainset(train_data)
+# eval_set = DatasetPure.build_evalset(eval_data)
+
+# # # del train_data, eval_data\n
+Cell 23
+----------------------------------------\nimport tensorflow as tf
+
+from recora.algorithms import (
+	YouTubeRetrieval,
+	YouTubeRanking,
+	UserCF,
+	FM,
+	AutoInt,
+	WideDeep,
+	ItemCF,
+	RNN4Rec,
+	BPR,
+	LightGCN,
+	NGCF,
+	Transformer,
+	DeepFM,
+	GraphSage,
+	NCF,
+)
+
+# ============================================================
+# Common settings
+# ============================================================
+
+METRICS = [
+	"loss",
+	"balanced_accuracy",
+	"roc_auc",
+	"pr_auc",
+	"precision",
+	"recall",
+	"map",
+	"ndcg",
+]
+
+TF_SESS_CONFIG = {
+	"gpu_options": {
+		"allow_growth": True,
+		"per_process_gpu_memory_fraction": 0.95,
+	}
+}
+
+
+def reset_state(model_name: str) -> None:
+	tf.compat.v1.reset_default_graph()
+	print(f"\n{'=' * 30} {model_name} {'=' * 30}")
+
+
+def print_hp(hp: dict) -> None:
+	print("Hyperparameters:")
+	print("-" * 40)
+	print(hp)
+	print("-" * 40)
+
+
+# ============================================================
+# Model hyperparameters
+# ============================================================
+
+MODEL_CONFIGS = {
+	"BPR": {
+		"MODEL": "BPR",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 5,
+		"BATCH_SIZE": 4096 * 5,
+		"LR": 1e-3,
+		"LOSS_TYPE": "bpr",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"N_EPOCHS": 10,
+		"LR_DECAY": True,
+	},
+	"NCF": {
+		"MODEL": "NCF",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"BATCH_SIZE": 4096 * (1 + 1),
+		"LR": 1e-4,
+		"LOSS_TYPE": "cross_entropy",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"HIDDEN_UNITS": (256, 128, 64, 32),
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+	},
+	"DeepFM": {
+		"MODEL": "DeepFM",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"BATCH_SIZE": 2048 * (1 + 1),
+		"LR": 1e-3,
+		"LOSS_TYPE": "cross_entropy",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"HIDDEN_UNITS": (256, 128, 64),
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+	},
+	"Transformer": {
+		"MODEL": "Transformer",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",  # random | unconsumed | popular
+		"NUM_NEG": 1,
+		"BATCH_SIZE": 1024 * (1 + 1),
+		"LR": 2e-4,
+		"LOSS_TYPE": "cross_entropy",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"N_EPOCHS": 3,
+		"LR_DECAY": True,
+		"NUM_HEAD": 2,
+		"NUM_TFM_LAYERS": 1,
+		"HIDDEN_UNITS": (256, 128, 64),
+		"RECENT_NUM": 5,
+		"RANDOM_NUM": None,
+	},
+	"RNN4Rec": {
+		"MODEL": "RNN4Rec",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"BATCH_SIZE": 4096,
+		"LR": 1e-3,
+		"LOSS_TYPE": "bpr",
+		"TASK": "ranking",
+		"EMBED_SIZE": 8,
+		"N_EPOCHS": 3,
+		"LR_DECAY": True,
+		"RECENT_NUM": 10,
+		"HIDDEN_UNITS": (8, 8),
+	},
+	"YoutubeRanker": {
+		"MODEL": "YoutubeRanker",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 5,
+		"BATCH_SIZE": 2048 * (5 + 1),
+		"LR": 1e-3,
+		"LOSS_TYPE": "bpr",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+		"RECENT_NUM": 10,
+		"RANDOM_NUM": None,
+		"HIDDEN_UNITS": (512, 256, 128),
+	},
+	"LightGCN": {
+		"MODEL": "LightGCN",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"N_LAYERS": 5,
+		"BATCH_SIZE": 2048,
+		"LR": 2e-4,
+		"LOSS_TYPE": "bpr",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+	},
+	"NGCF": {
+		"MODEL": "NGCF",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"N_LAYERS": 5,
+		"BATCH_SIZE": 4096,
+		"LR": 1e-3,
+		"LOSS_TYPE": "bpr",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"LAYER_SIZES": (16, 16, 16),
+		"NODE_DROPOUT": 0.1,
+		"MESSAGE_DROPOUT": 0.1,
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+	},
+	"GraphSage": {
+		"MODEL": "GraphSage",
+		"NEG_SAMPLING": True,
+		"NEG_SAMPLER": "unconsumed",
+		"NUM_NEG": 1,
+		"BATCH_SIZE": 512 * 8,
+		"LR": 1e-4,
+		"LOSS_TYPE": "softmax",
+		"TASK": "ranking",
+		"EMBED_SIZE": 16,
+		"LAYER_SIZES": (16, 16),
+		"HIDDEN_UNITS": (128, 64),
+		"neighbor_sampling": True,
+		"sample_sizes": (10, 5),
+		"N_EPOCHS": 5,
+		"LR_DECAY": True,
+		"RECENT_NUM": 5,
+		"RANDOM_NUM": 5,
+	},
+}
+
+
+# ============================================================
+# Model builder
+# ============================================================
+
+def build_model(model_name: str, hp: dict, data_info):
+	reset_state(model_name)
+
+	if model_name == "BPR":
+		return BPR(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			num_neg=hp["NUM_NEG"],
+		)
+
+	if model_name == "NCF":
+		return NCF(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			use_bn=False,
+			tf_sess_config=TF_SESS_CONFIG,
+			num_neg=hp["NUM_NEG"],
+
+			reg=1e-5,
+			epsilon=1e-8,
+			dropout_rate=0.2,
+			listnet_temperature=0.1,
+		)
+
+	if model_name == 'DeepFM':
+		return DeepFM(
+			hp["TASK"],
+			data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			use_bn=False,
+			hidden_units=hp["HIDDEN_UNITS"],
+			tf_sess_config=TF_SESS_CONFIG,
+			sampler=hp["NEG_SAMPLER"],
+			num_neg=hp["NUM_NEG"],
+
+			epsilon=1e-8,
+			dropout_rate=0.1,
+			reg=1e-5,
+			approx_ndcg_temperature=0.1,
+			listnet_temperature=0.1
+		)
+
+	if model_name == "Transformer":
+		return Transformer(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			reg=None,
+			batch_size=hp["BATCH_SIZE"],
+			use_bn=False,
+			sampler=hp["NEG_SAMPLER"],
+			dropout_rate=None,
+			num_heads=hp["NUM_HEAD"],
+			num_tfm_layers=hp["NUM_TFM_LAYERS"],
+			hidden_units=hp["HIDDEN_UNITS"],
+			use_causal_mask=False,
+			feat_agg_mode="concat",
+			approx_ndcg_temperature=0.1,
+			recent_num=hp["RECENT_NUM"],
+			random_num=hp["RANDOM_NUM"],
+			tf_sess_config=TF_SESS_CONFIG,
+			epsilon=1e-7,
+		)
+
+	if model_name == "RNN4Rec":
+		return RNN4Rec(
+			task=hp["TASK"],
+			data_info=data_info,
+			rnn_type="gru",
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			hidden_units=hp["HIDDEN_UNITS"],
+			reg=None,
+			batch_size=hp["BATCH_SIZE"],
+			num_neg=hp["NUM_NEG"],
+			dropout_rate=None,
+			recent_num=hp["RECENT_NUM"],
+			tf_sess_config=TF_SESS_CONFIG,
+		)
+
+	if model_name == "YoutubeRanker":
+		return YouTubeRanking(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			num_neg=hp["NUM_NEG"],
+			sampler=hp["NEG_SAMPLER"],
+			use_bn=False,
+			hidden_units=hp["HIDDEN_UNITS"],
+			tf_sess_config=TF_SESS_CONFIG,
+			recent_num=hp["RECENT_NUM"],
+			random_num=hp["RANDOM_NUM"],
+            reg=1e-5,
+			dropout_rate=0.1,
+			approx_ndcg_temperature=0.1,
+			listnet_temperature=0.1,
+			epsilon=1e-8
+		)
+
+	if model_name == "LightGCN":
+		return LightGCN(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			n_layers=hp["N_LAYERS"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			sampler=hp["NEG_SAMPLER"],
+			num_neg=hp["NUM_NEG"],
+			tf_sess_config=TF_SESS_CONFIG,
+			reg=1e-5,
+			epsilon=1e-8,
+		)
+
+	if model_name == "NGCF":
+		return NGCF(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			layer_sizes=hp["LAYER_SIZES"],
+			node_dropout_rate=hp["NODE_DROPOUT"],
+			message_dropout_rate=hp["MESSAGE_DROPOUT"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			batch_size=hp["BATCH_SIZE"],
+			num_neg=hp["NUM_NEG"],
+			listnet_temperature=1,
+			reg=1e-5,
+			epsilon=1e-8
+		)
+
+	if model_name == "GraphSage":
+		return GraphSage(
+			task=hp["TASK"],
+			data_info=data_info,
+			loss_type=hp["LOSS_TYPE"],
+			embed_size=hp["EMBED_SIZE"],
+			layer_sizes=hp["LAYER_SIZES"],
+			hidden_units=hp["HIDDEN_UNITS"],
+			n_epochs=hp["N_EPOCHS"],
+			lr=hp["LR"],
+			lr_decay=hp["LR_DECAY"],
+			batch_size=hp["BATCH_SIZE"],
+			neighbor_sampling=hp["neighbor_sampling"],
+			sample_sizes=hp["sample_sizes"],
+			num_neg=hp["NUM_NEG"],
+			sampler=hp["NEG_SAMPLER"],
+			recent_num=hp["RECENT_NUM"],
+			random_num=hp["RANDOM_NUM"],
+			use_bn=False,
+			dropout_rate=None,
+			reg=None,
+			listnet_temperature=0.05,
+			tf_sess_config=TF_SESS_CONFIG,
+			epsilon=1e-8
+		)
+
+	raise ValueError(f"Unsupported model: {model_name}")\n
+Cell 24
+----------------------------------------\n# ============================================================
+# Training entrypoint
+# ============================================================
+
+SELECTED_MODEL = "YoutubeRanker"
+hp = MODEL_CONFIGS[SELECTED_MODEL]
+
+print_hp(hp)
+
+model = build_model(SELECTED_MODEL, hp, data_info)
+
+model.fit(
+	train_data=train_set,
+	neg_sampling=hp["NEG_SAMPLING"],
+	verbose=2,
+	shuffle=False,
+	metrics=METRICS,
+	eval_data=eval_set,
+	eval_user_num=50000,
+	k=TOP_K,
+	eval_batch_size=hp["BATCH_SIZE"],
+)
+
+print_hp(hp)\n
+Cell 25
+----------------------------------------\n# model = YouTubeRetrieval(l
+# 	"ranking",
+# 	data_info,
+# 	loss_type="sampled_softmax",
+# 	embed_size=32,
+# 	norm_embed=False,
+# 	n_epochs=10,
+# 	lr=1.25*1e-3,
+# 	lr_decay=True,
+# 	reg=1e-6,
+# 	batch_size=512,
+# 	use_bn=False,
+# 	dropout_rate=0.2,
+# 	hidden_units=(256, 128, 64),
+# 	tf_sess_config=config_dict,
+# 	num_sampled_per_batch=512 * 15,
+# 	recent_num=31,
+# 	random_num=31
+# 	# multi_sparse_combiner='normal'
+# )
+
+# Epoch 10 elapsed: 178.519s
+# 	 train_loss: 5.8241
+# eval_pointwise: 100%|██████████| 3788/3788 [00:01<00:00, 3569.97it/s]
+# eval_listwise: 100%|██████████| 5000/5000 [00:05<00:00, 950.57it/s]
+# 	 eval log_loss: 0.2397
+# 	 eval balanced_accuracy: 0.9053
+# 	 eval roc_auc: 0.9718
+# 	 eval pr_auc: 0.9684
+# 	 eval precision@20: 0.0295
+# 	 eval recall@20: 0.2478
+# 	 eval map@20: 0.1391
+# 	 eval ndcg@20: 0.2134\n
+Cell 26
+----------------------------------------\n# model = YouTubeRanking(
+# 	"ranking",
+# 	data_info,
+# 	loss_type="ranknet",
+# 	embed_size=32,
+# 	n_epochs=5,
+# 	lr=2e-3,
+# 	lr_decay=False,
+# 	reg=1e-6,
+# 	batch_size=BATCH_SIZE,
+# 	num_neg=NUM_NEG,
+# 	sampler=NEG_SAMPLER,
+# 	use_bn=False,
+# 	dropout_rate=0.2,
+# 	hidden_units=(256, 128, 64),
+# 	tf_sess_config=config_dict,
+# 	recent_num=10,
+# )
+#
+# 	 # eval log_loss: 0.3646
+# 	 # eval balanced_accuracy: 0.8449
+# 	 # eval roc_auc: 0.9204
+# 	 # eval pr_auc: 0.7349
+# 	 # eval precision@20: 0.0388
+# 	 # eval recall@20: 0.1612
+# 	 # eval map@20: 0.1497
+# 	 # eval ndcg@20: 0.2412\n
+Cell 27
+----------------------------------------\n# from libreco.data import DataInfo
+
+# SAVE_PATH = 'youtube-retr'
+# SAVE_MODEL_NAME = 'youtuberetrieval'
+# # save data_info, specify model save folder
+# data_info.save(
+# 	path=SAVE_PATH,
+# 	model_name=SAVE_MODEL_NAME
+# )
+# # set manual=True will use `numpy` to save model
+# # set manual=False will use `tf.train.Saver` to save model
+# # set inference=True will only save the necessary variables for prediction and recommendation
+# model.save(
+# 	path=SAVE_PATH,
+# 	model_name=SAVE_MODEL_NAME,
+# 	manual=False,
+# 	inference_only=True
+# )\n
+Cell 28
+----------------------------------------\ndata_info.user_col\n
+Cell 29
+----------------------------------------\n# import numpy as np
+#
+# feature_names = scaler.get_feature_names_out()
+# n_features = len(feature_names)
+#
+# # create dummy row
+# x = np.zeros((1, n_features))
+#
+# # put your value in correct column
+# idx = list(feature_names).index('order_hour')
+# x[0, idx] = 8
+#
+# # transform
+# x_scaled = scaler.transform(x)
+#
+# order_hour_scaled = x_scaled[0, idx]
+# print(order_hour_scaled)
+
+result = model.recommend_user(
+	"30953879",
+	n_rec=20,
+	filter_consumed=False,
+	# user_feats={
+	# 	"order_hour": 0,
+	# }
+)
+
+result = pd.DataFrame(result).rename(columns={"30953879": "category_id"}).astype(int)
+brand_category_titles = pd.read_csv('./sample_data/brand_category_titles.csv').drop_duplicates(subset=['category_id'])
+result = result.merge(brand_category_titles, on=['category_id'], how='left')
+result[['category_id', 'category_title']]\n
+Cell 30
+----------------------------------------\nresult = train_data[train_data['user'] == "30953879"].groupby(['item'])['label'].count().reset_index()
+result
+# result
+# result.merge(brand_category_titles, left_on=['item'] ,right_on=['category_id'], how='left')\n
+Cell 31
+----------------------------------------\nresult = df.loc[df['user'] == "30953879"]
+result['category_id'] = pd.to_numeric(result['item'], errors='coerce')
+brand_category_titles = pd.read_csv('./sample_data/brand_category_titles.csv').drop_duplicates(subset=['category_id'])
+result = result.merge(brand_category_titles, on=['category_id'], how='left')
+result[['sample_weight', 'category_id', 'category_title']].sort_values(by='sample_weight', ascending=False)\n
+Cell 32
+----------------------------------------\nimport tensorflow as tf
+from libreco.data import DataInfo
+from libreco.algorithms import TwoTower, YouTubeRetrieval
+
+# important to reset graph if model is loaded in the same shell.
+tf.compat.v1.reset_default_graph()
+# load data_info
+data_info = DataInfo.load(
+	SAVE_PATH, model_name=SAVE_MODEL_NAME
+)
+print(data_info)
+# load model, should specify the model name, e.g., DeepFM
+model: YouTubeRetrieval = YouTubeRetrieval.load(
+	path=SAVE_PATH, model_name=SAVE_MODEL_NAME, data_info=data_info, manual=True
+)\n
+Cell 33
+----------------------------------------\n# model.user_embeds_np[data_info.user2id[30953879]].shape
+model.user_embeds_np.shape\n
+Cell 34
+----------------------------------------\nimport faiss
+import numpy as np
+import pandas as pd
+
+faiss_index: faiss.swigfaiss.IndexIVFFlat = faiss.read_index('./embed_model/faiss_index.bin')
+user_embedding = model.get_user_embedding(30953879, include_bias=True).astype(np.float32).reshape(1, -1)
+distances, ids = faiss_index.search(user_embedding, 100)\n
+Cell 35
+----------------------------------------\ndistances\n
+Cell 36
+----------------------------------------\nresult = pd.DataFrame(list(map(lambda item: list(map(lambda x: int(x), item.split("012"))), [data_info.id2item[x] for x in ids.ravel().tolist()])),
+                      columns=['brand_id', 'category_id'])
+result['distances'] = distances.ravel()
+
+brand_category_titles = pd.read_csv('brand_category_titles.csv')
+result = result.merge(brand_category_titles, on=['brand_id', 'category_id'], how='left')\n
+Cell 37
+----------------------------------------\n# result[result['category_id'] == 69]
+result\n
+Cell 39
+----------------------------------------\nfrom libserving.serialization import embed2redis, save_embed, save_faiss_index
+
+path = "embed_model"  # specify model saving directory
+save_embed(path, model)  # save model in json format\n
+Cell 40
+----------------------------------------\nfrom libserving.serialization.redis import redis_connection, model_name2redis, id_mapping2redis, user_consumed2redis, user_embed2redis
+import ujson
+import os
+
+host = "localhost"
+port = 6379
+db = 0
+chunk_size = 10000
+with redis_connection(host, port, db) as r:
+	model_name2redis(path, r)
+	print("\nmodel_name2redis ...")
+
+with redis_connection(host, port, db) as r:
+	id_mapping2redis(path, r)
+	print("\nid_mapping2redis ...")
+
+with redis_connection(host, port, db) as r:
+	with open(os.path.join(path, "user_consumed.json")) as f:
+		data = ujson.load(f)
+
+	pipe = r.pipeline()
+	for i, (u, items) in enumerate(data.items()):
+		pipe.hset("user_consumed", u, ujson.dumps(items))
+		if (i + 1) % chunk_size == 0:
+			pipe.execute()
+			pipe = r.pipeline()
+	pipe.execute()
+	print("\nuser_consumed2redis ...")
+
+with redis_connection(host, port, db) as r:
+	with open(os.path.join(path, "user_embed.json")) as f:
+		user_embeds = ujson.load(f)
+
+	pipe = r.pipeline()
+	for i, (u, embed) in enumerate(user_embeds.items()):
+		pipe.hset("user_embed", u, ujson.dumps(embed))
+		if (i + 1) % chunk_size == 0:
+			pipe.execute()
+			pipe = r.pipeline()
+	pipe.execute()
+	print("\nuser_embed2redis ...")\n
+Cell 41
+----------------------------------------\nfrom libserving.serialization import save_faiss_index
+
+print(path, model)
+save_faiss_index(path, model)\n
+Cell 42
+----------------------------------------\nimport requests
+import json
+
+payload = {
+	"user": "30953879",
+	"n_rec": 100
+}
+
+result = requests.post(
+	"http://127.0.0.1:8000/embed/recommend",
+	headers={"Content-Type": "application/json"},
+	data=json.dumps(payload)
+).json()\n
+Cell 43
+----------------------------------------\nresult[['brand_id', 'category_id']] = (
+	result['item']
+	.str.split("012", expand=True, n=1)  # n=1 ensures we only split once
+)
+
+# Optional: convert to integer if they are numeric IDs
+result['brand_id'] = pd.to_numeric(result['brand_id'], errors='coerce')
+result['category_id'] = pd.to_numeric(result['category_id'], errors='coerce')\n
+Cell 45
+----------------------------------------\nfrom libserving.serialization import save_online, online2redis
+
+path = "online_model"  # specify model saving directory
+save_online(path, model, version=1)  # save model in json format\n
+Cell 46
+----------------------------------------\nfrom libserving.serialization.redis import redis_connection, model_name2redis, id_mapping2redis
+import ujson
+import os
+
+host = "localhost"
+port = 6379
+db = 0
+chunk_size = 10000  # ← same as you used before
+
+# ------------------------------------------------------------------
+# 1. model_name + id_mapping (small, unchanged)
+# ------------------------------------------------------------------
+with redis_connection(host, port, db) as r:
+	model_name2redis(path, r)
+	print("\nmodel_name2redis ...")
+
+with redis_connection(host, port, db) as r:
+	id_mapping2redis(path, r)
+	print("\nid_mapping2redis ...")
+
+# ------------------------------------------------------------------
+# 2. user_consumed (your existing chunked version)
+# ------------------------------------------------------------------
+with redis_connection(host, port, db) as r:
+	with open(os.path.join(path, "user_consumed.json")) as f:
+		data = ujson.load(f)
+
+	pipe = r.pipeline()
+	for i, (u, items) in enumerate(data.items()):
+		pipe.hset("user_consumed", u, ujson.dumps(items))
+		if (i + 1) % chunk_size == 0:
+			pipe.execute()
+			pipe = r.pipeline()
+	pipe.execute()
+	print("\nuser_consumed2redis ...")
+
+# ------------------------------------------------------------------
+# 3. features2redis → FULLY CHUNKED (the heavy part for online models)
+# ------------------------------------------------------------------
+with redis_connection(host, port, db) as r:
+	feature_path = os.path.join(path, "features.json")
+	with open(feature_path) as f:
+		feats = ujson.load(f)
+
+	r.set("n_users", feats["n_users"])
+	r.set("n_items", feats["n_items"])
+	if "max_seq_len" in feats:
+		r.set("max_seq_len", feats["max_seq_len"])
+
+	# user_sparse_values (per-user)
+	if "user_sparse_col_index" in feats:
+		r.hset("feature", "user_sparse", 1)
+		r.set("user_sparse_col_index", ujson.dumps(feats["user_sparse_col_index"]))
+		pipe = r.pipeline()
+		for i, vals in enumerate(feats["user_sparse_values"]):
+			pipe.hset("user_sparse_values", str(i), ujson.dumps(vals))
+			if (i + 1) % chunk_size == 0:
+				pipe.execute()
+				pipe = r.pipeline()
+		pipe.execute()
+
+	# item_sparse_values (list push)
+	if "item_sparse_col_index" in feats:
+		r.hset("feature", "item_sparse", 1)
+		r.set("item_sparse_col_index", ujson.dumps(feats["item_sparse_col_index"]))
+		pipe = r.pipeline()
+		for i, vals in enumerate(feats["item_sparse_values"]):
+			pipe.rpush("item_sparse_values", ujson.dumps(vals))
+			if (i + 1) % chunk_size == 0:
+				pipe.execute()
+				pipe = r.pipeline()
+		pipe.execute()
+
+	# user_dense_values (per-user)
+	if "user_dense_col_index" in feats:
+		r.hset("feature", "user_dense", 1)
+		r.set("user_dense_col_index", ujson.dumps(feats["user_dense_col_index"]))
+		pipe = r.pipeline()
+		for i, vals in enumerate(feats["user_dense_values"]):
+			pipe.hset("user_dense_values", str(i), ujson.dumps(vals))
+			if (i + 1) % chunk_size == 0:
+				pipe.execute()
+				pipe = r.pipeline()
+		pipe.execute()
+
+	# item_dense_values (list push)
+	if "item_dense_col_index" in feats:
+		r.hset("feature", "item_dense", 1)
+		r.set("item_dense_col_index", ujson.dumps(feats["item_dense_col_index"]))
+		pipe = r.pipeline()
+		for i, vals in enumerate(feats["item_dense_values"]):
+			pipe.rpush("item_dense_values", ujson.dumps(vals))
+			if (i + 1) % chunk_size == 0:
+				pipe.execute()
+				pipe = r.pipeline()
+		pipe.execute()
+
+	print("\nfeatures2redis ...")
+
+# ------------------------------------------------------------------
+# 4. user_sparse2redis (small, no chunk needed)
+# ------------------------------------------------------------------
+with redis_connection(host, port, db) as r:
+	user_sparse_fields_path = os.path.join(path, "user_sparse_fields.json")
+	if os.path.exists(user_sparse_fields_path):
+		with open(user_sparse_fields_path) as f:
+			user_sparse_fields = ujson.load(f)
+		r.hset("user_sparse_fields", mapping=user_sparse_fields)
+
+	user_sparse_idx_mapping_path = os.path.join(path, "user_sparse_idx_mapping.json")
+	if os.path.exists(user_sparse_idx_mapping_path):
+		with open(user_sparse_idx_mapping_path) as f:
+			user_sparse_idx_mapping = ujson.load(f)
+		for col, idx_mapping in user_sparse_idx_mapping.items():
+			col_name = f"user_sparse_idx_mapping__{col}"
+			r.hset(col_name, mapping=idx_mapping)
+
+	print("\nuser_sparse2redis ...")
+
+# ------------------------------------------------------------------
+# 5. user_dense2redis (small, no chunk needed)
+# ------------------------------------------------------------------
+with redis_connection(host, port, db) as r:
+	user_dense_fields_path = os.path.join(path, "user_dense_fields.json")
+	if os.path.exists(user_dense_fields_path):
+		with open(user_dense_fields_path) as f:
+			user_dense_fields = ujson.load(f)
+		r.hset("user_dense_fields", mapping=user_dense_fields)
+
+	print("\nuser_dense2redis ...")
+
+print("\n✅ All online2redis data loaded into Redis with chunking!")\n
+Cell 47
+----------------------------------------\nfrom libserving.serialization import save_faiss_index
+
+save_faiss_index(path, model)\n
+Cell 48
+----------------------------------------\nresult = model.recommend_user(
+	30953879,
+	n_rec=10,
+	filter_consumed=False,
+	# user_feats={
+	# 	"order_hour": 20
+	# }
+)
+
+result = pd.DataFrame(result)
+result[['brand_id', 'category_id']] = (
+	result[30953879]
+	.str.split("012", expand=True, n=1)  # n=1 ensures we only split once
+)
+# Optional: convert to integer if they are numeric IDs
+result['brand_id'] = pd.to_numeric(result['brand_id'], errors='coerce')
+result['category_id'] = pd.to_numeric(result['category_id'], errors='coerce')
+brand_category_titles = pd.read_csv('brand_category_titles.csv')
+result = result.merge(brand_category_titles, on=['brand_id', 'category_id'], how='left')
+result\n
+Cell 49
+----------------------------------------\njson.dumps(payload)\n
+Cell 50
+----------------------------------------\nimport requests
+import json
+
+payload = {
+	"user": 30953879,
+	"n_rec": 10,
+	"filter_consumed": False,
+	"return_scores": False,
+	"user_feats": {
+		"order_hour": 12
+	}
+}
+
+result = requests.post(
+	"http://127.0.0.1:8000/online/recommend",
+	headers={"Content-Type": "application/json"},
+	data=json.dumps(payload)
+).json()
+
+result = pd.DataFrame(result)
+result[['brand_id', 'category_id']] = (
+	result['recommendations']
+	.str.split("012", expand=True, n=1)  # n=1 ensures we only split once
+)
+
+# Optional: convert to integer if they are numeric IDs
+result['brand_id'] = pd.to_numeric(result['brand_id'], errors='coerce')
+result['category_id'] = pd.to_numeric(result['category_id'], errors='coerce')
+brand_category_titles = pd.read_csv('brand_category_titles.csv')
+result = result.merge(brand_category_titles, on=['brand_id', 'category_id'], how='left')
+result\n
+Cell 52
+----------------------------------------\nBRAND_CATEGORY_SQL = """
+SELECT category_level2_id                                        AS category_id,
+       brand_id                                                  AS brand_id,
+       dictGet('KF.dim_categories', 'title', category_level2_id) AS category_title,
+       dictGet('KF.dim_brands', 'title', brand_id)               AS brand_title
+FROM KF.plane_products
+GROUP BY category_level2_id, brand_id
+"""
+
+brand_category_titles = client.query_df(BRAND_CATEGORY_SQL)\n
+Cell 53
+----------------------------------------\nbrand_category_titles.to_csv('brand_category_titles.csv', index=False)\n
+Cell 54
+----------------------------------------\nbrand_category_titles = pd.read_csv('brand_category_titles.csv')\n

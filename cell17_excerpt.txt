@@ -1,0 +1,25 @@
+
+Cell 16
+----------------------------------------
+# eval_inter_events = eval_inter_events.groupby(['user', 'item']).agg({
+# 	'sample_weight': 'sum',  # total strength
+# 	# 'sample_weight': 'count',  # total strength
+#
+# 	'time': 'max',  # most recent interaction
+# 	'order_hour': 'mean'  # most frequent hour        # typical hour
+# }).reset_index()
+Cell 17
+----------------------------------------
+train_inter_events['label'] = 1
+
+train_data = train_inter_events[['user', 'item', 'time',  'label', 'sample_weight'] + user_sparse_features + user_dense_features + item_sparse_features + item_dense_features]
+train_data = train_data.fillna(0)
+
+eval_inter_events['label'] = 1
+
+eval_data = eval_inter_events[['user', 'item', 'time', 'label'] + user_sparse_features + user_dense_features + item_sparse_features + item_dense_features]
+eval_data = eval_data.fillna(0)
+Cell 18
+----------------------------------------
+for c in [user_sparse_features + item_sparse_features]:
+    print(c)
