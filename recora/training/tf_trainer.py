@@ -1,6 +1,5 @@
 import warnings
 
-import numpy as np
 from tqdm import tqdm
 
 from .trainer import BaseTrainer
@@ -10,7 +9,7 @@ from ..layers import normalize_embeds
 from ..tfops import choose_tf_loss, lr_decay_config, tf, var_list_by_name
 from ..tfops.loss import weighted_mean
 from ..utils.constants import EmbeddingModels
-from ..utils.misc import colorize, time_block
+from ..utils.misc import time_block
 
 
 class TensorFlowTrainer(BaseTrainer):
@@ -78,32 +77,28 @@ class TensorFlowTrainer(BaseTrainer):
                     )
                 with time_block(f"Epoch {epoch}", verbose):
                     disable = True if verbose <= 0 else False
-                    train_total_loss = []
                     for batch_data in tqdm(data_loader, desc="train", disable=disable):
-                        fetches = (self.loss, self.training_op)
                         feed_dict = get_tf_feeds(self.model, batch_data, is_training=True)
-                        train_loss, _ = self.sess.run(fetches, feed_dict)
-                        train_total_loss.append(train_loss)
+                        self.sess.run(self.training_op, feed_dict)
 
                 if verbose > 1:
-                    train_loss_str = "train_loss: " + str(
-                        round(float(np.mean(train_total_loss)), 4)
-                    )
-                    print(f"\t {colorize(train_loss_str, 'green')}")
                     # get embedding for evaluation
                     if EmbeddingModels.contains(self.model.model_name):
                         self.model.set_embeddings()
-                    print_metrics(
+                    printed_metrics = print_metrics(
                         model=self.model,
                         neg_sampling=neg_sampling,
+                        train_data=train_data,
                         eval_data=eval_data,
                         metrics=metrics,
                         eval_batch_size=eval_batch_size,
                         k=k,
                         sample_user_num=eval_user_num,
                         seed=self.model.seed,
+                        verbose=verbose,
                     )
-                    print("=" * 30)
+                    if printed_metrics:
+                        print("=" * 30)
         finally:
             if hasattr(data_loader, "close"):
                 data_loader.close()

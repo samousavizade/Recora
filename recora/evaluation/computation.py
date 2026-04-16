@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
-from ..data import TransformedEvalSet
+from ..data import TransformedEvalSet, TransformedSet
 from ..prediction.preprocess import convert_id
 from ..utils.validate import check_labels
 
@@ -15,6 +15,8 @@ def build_eval_transformed_data(model, data, neg_sampling, seed):
         user_indices, item_indices = convert_id(model, users, items, inner_id=False)
         labels = data["label"].to_numpy(dtype=np.float32)
         data = TransformedEvalSet(user_indices, item_indices, labels)
+    elif isinstance(data, TransformedSet):
+        data = TransformedEvalSet(data.user_indices, data.item_indices, data.labels)
     if neg_sampling and not data.has_sampled:
         num_neg = model.num_neg or 1 if hasattr(model, "num_neg") else 1
         data.build_negatives(model.n_items, num_neg, seed=seed)

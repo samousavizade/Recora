@@ -115,8 +115,8 @@ class ALS(EmbedBase):
             .. versionadded:: 1.1.0
 
         verbose : int, default: 1
-            Print verbosity. If `eval_data` is provided, setting it to higher than 1
-            will print evaluation metrics during training.
+            Print verbosity. `verbose=2` prints evaluation metrics if `eval_data`
+            is provided, and `verbose>=3` prints training and evaluation metrics.
         shuffle : bool, default: True
             Whether to shuffle the training data.
         eval_data : :class:`~recora.data.TransformedSet` object, default: None
@@ -168,17 +168,20 @@ class ALS(EmbedBase):
                 )
 
             if verbose > 1:
-                print_metrics(
+                printed_metrics = print_metrics(
                     model=self,
                     neg_sampling=neg_sampling,
+                    train_data=train_data,
                     eval_data=eval_data,
                     metrics=metrics,
                     eval_batch_size=eval_batch_size,
                     k=k,
                     sample_user_num=eval_user_num,
                     seed=self.seed,
+                    verbose=verbose,
                 )
-                print("=" * 30)
+                if printed_metrics:
+                    print("=" * 30)
 
         self.assign_embedding_oov()
         self.default_recs = recommend_from_embedding(

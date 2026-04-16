@@ -382,7 +382,7 @@ and perform negative sampling. This is a standard procedure for "implicit data".
     model.fit(
         train_data,
         neg_sampling=True,  # perform negative sampling on training and eval data
-        verbose=2,
+        verbose=3,
         shuffle=True,
         eval_data=eval_data,
         metrics=["loss", "roc_auc", "precision", "recall", "ndcg"],
@@ -391,7 +391,7 @@ and perform negative sampling. This is a standard procedure for "implicit data".
 ::
 
     Epoch 1 elapsed: 2.905s
-        train_loss: 0.959
+        train log_loss: 0.9590
         eval log_loss: 0.5823
         eval roc_auc: 0.8032
         eval precision@10: 0.0236
@@ -399,7 +399,7 @@ and perform negative sampling. This is a standard procedure for "implicit data".
         eval ndcg@10: 0.1001
 
     Epoch 2 elapsed: 2.508s
-        train_loss: 0.499
+        train log_loss: 0.4990
         eval log_loss: 0.4769
         eval roc_auc: 0.8488
         eval precision@10: 0.0332
@@ -569,7 +569,7 @@ Finally, the training and recommendation parts are the same as before.
     new_model.fit(
         train_data,
         neg_sampling=True,
-        verbose=2, 
+        verbose=3, 
         shuffle=True, 
         eval_data=eval_data,
         metrics=["loss", "roc_auc", "precision", "recall", "ndcg"],
@@ -578,7 +578,7 @@ Finally, the training and recommendation parts are the same as before.
 ::
 
     Epoch 1 elapsed: 2.867s
-        train_loss: 0.4867
+        train log_loss: 0.4867
         eval log_loss: 0.4482
         eval roc_auc: 0.8708
         eval precision@10: 0.0985
@@ -586,7 +586,7 @@ Finally, the training and recommendation parts are the same as before.
         eval ndcg@10: 0.3062
 
     Epoch 2 elapsed: 2.770s
-        train_loss: 0.472
+        train log_loss: 0.4720
         eval log_loss: 0.4416
         eval roc_auc: 0.8741
         eval precision@10: 0.1031

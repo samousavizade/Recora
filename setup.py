@@ -8,7 +8,7 @@ from pathlib import Path
 import numpy as np
 import tomli
 from Cython.Build import cythonize
-from Cython.Distutils import build_ext
+from Cython.Distutils import build_ext as cython_build_ext
 from setuptools import Extension, find_packages, setup
 
 
@@ -32,6 +32,10 @@ def extract_gcc_binaries():
             return
     else:
         return
+
+
+LOG_FORMAT = "%(asctime)s - %(levelname)s - %(message)s"
+logging.basicConfig(format=LOG_FORMAT, level=logging.INFO)
 
 
 if sys.platform.startswith("win"):
@@ -73,6 +77,7 @@ extensions = [
         language="c++",
         extra_compile_args=compile_args,
         extra_link_args=link_args,
+        optional=True,
     ),
     Extension(
         "recora.algorithms._als",
@@ -81,6 +86,7 @@ extensions = [
         language="c++",
         extra_compile_args=compile_args,
         extra_link_args=link_args,
+        optional=True,
     ),
     Extension(
         "recora.utils._similarities",
@@ -89,8 +95,26 @@ extensions = [
         language="c++",
         extra_compile_args=compile_args,
         extra_link_args=link_args,
+        optional=True,
     ),
 ]
+
+
+class build_ext(cython_build_ext):
+    def run(self):
+        try:
+            super().run()
+        except Exception as e:
+            logging.warning("Skipping optional native extensions: %s", e)
+
+    def build_extension(self, ext):
+        try:
+            super().build_extension(ext)
+        except Exception as e:
+            if getattr(ext, "optional", False):
+                logging.warning("Failed to build optional extension %s: %s", ext.name, e)
+            else:
+                raise
 
 # copy metadata from pyproject.toml
 readme = (Path(__file__).parent / "README.md").read_text()

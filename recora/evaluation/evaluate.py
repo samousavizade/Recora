@@ -29,7 +29,7 @@ from .metrics import (
     rmse,
     roc_gauc_score,
 )
-from ..data import TransformedEvalSet
+from ..data import TransformedEvalSet, TransformedSet
 
 
 def _check_metrics(task, metrics, k):
@@ -75,7 +75,8 @@ def evaluate(
     ----------
     model : Base
         Model for evaluation.
-    data : :class:`pandas.DataFrame` or :class:`~recora.data.TransformedEvalSet`
+    data : :class:`pandas.DataFrame` or :class:`~recora.data.TransformedEvalSet` or
+        :class:`~recora.data.TransformedSet`
         Data to evaluate.
     neg_sampling : bool
         Whether to perform negative sampling for evaluating data.
@@ -100,8 +101,11 @@ def evaluate(
     --------
     >>> eval_result = evaluate(model, data, neg_sampling=True, metrics=["roc_auc", "precision", "recall"])
     """
-    if not isinstance(data, (pd.DataFrame, TransformedEvalSet)):
-        raise ValueError("`data` must be `pandas.DataFrame` or `TransformedEvalSet`")
+    if not isinstance(data, (pd.DataFrame, TransformedEvalSet, TransformedSet)):
+        raise ValueError(
+            "`data` must be `pandas.DataFrame`, `TransformedEvalSet` or "
+            "`TransformedSet`"
+        )
     data = build_eval_transformed_data(model, data, neg_sampling, seed)
     if not metrics:
         metrics = ["loss"]
@@ -155,16 +159,52 @@ def evaluate(
     return eval_result
 
 
+def _unique_metrics(metrics):
+    return list(dict.fromkeys(metrics))
+
+
+def _train_metrics(task, metrics, loss_name):
+    metrics = [loss_name] if not metrics else metrics
+    if not isinstance(metrics, (list, tuple)):
+        metrics = [metrics]
+
+    train_metrics = []
+    for metric in metrics:
+        metric = loss_name if metric == "loss" else metric
+        if task == "ranking" and metric in LISTWISE_METRICS:
+            continue
+        train_metrics.append(metric)
+
+    if loss_name not in train_metrics:
+        train_metrics.insert(0, loss_name)
+    return _unique_metrics(train_metrics)
+
+
+def _print_metric_lines(prefix, metric_values, loss_name, k):
+    for metric_name, value in metric_values.items():
+        if metric_name == "loss":
+            display_metric = loss_name
+        elif metric_name in LISTWISE_METRICS:
+            display_metric = f"{metric_name}@{k}"
+        else:
+            display_metric = metric_name
+        str_val = (
+            f"{round(value, 2)}%" if metric_name == "coverage" else f"{value:.4f}"
+        )
+        print(f"\t {prefix} {display_metric}: {str_val}")
+
+
 def print_metrics(
     model,
     neg_sampling,
-    # train_data=None,
+    train_data=None,
     eval_data=None,
     metrics=None,
     eval_batch_size=8192,
     k=10,
     sample_user_num=2048,
     seed=42,
+    verbose=2,
 ):
     loss_name = "rmse" if model.task == "rating" else "log_loss"
     metrics_fn = functools.partial(
@@ -176,17 +216,18 @@ def print_metrics(
         sample_user_num=sample_user_num,
         seed=seed,
     )
-    # if train_data:
-    #    train_metrics = metrics_fn(data=train_data, metrics=[loss_name])
-    #    print(f"\t train {loss_name}: {train_metrics[loss_name]:.4f}")
-    if eval_data:
+
+    printed = False
+    if verbose >= 3 and train_data is not None:
+        train_result = metrics_fn(
+            data=train_data, metrics=_train_metrics(model.task, metrics, loss_name)
+        )
+        _print_metric_lines("train", train_result, loss_name, k)
+        printed = printed or bool(train_result)
+
+    if verbose >= 2 and eval_data is not None:
         eval_metrics = metrics_fn(data=eval_data, metrics=metrics)
-        for m, val in eval_metrics.items():
-            if m == "loss":
-                metric = loss_name
-            elif m in LISTWISE_METRICS:
-                metric = f"{m}@{k}"
-            else:
-                metric = m
-            str_val = f"{round(val, 2)}%" if m == "coverage" else f"{val:.4f}"
-            print(f"\t eval {metric}: {str_val}")
+        _print_metric_lines("eval", eval_metrics, loss_name, k)
+        printed = printed or bool(eval_metrics)
+
+    return printed

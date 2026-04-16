@@ -89,7 +89,8 @@ class TfBase(Base):
 
             - ``verbose <= 0``: Print nothing.
             - ``verbose == 1``: Print progress bar and training time.
-            - ``verbose > 1`` : Print evaluation metrics if ``eval_data`` is provided.
+            - ``verbose == 2``: Print evaluation metrics if ``eval_data`` is provided.
+            - ``verbose >= 3``: Print training metrics and evaluation metrics.
 
         shuffle : bool, default: True
             Whether to shuffle the training data.
