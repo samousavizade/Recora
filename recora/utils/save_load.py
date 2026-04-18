@@ -7,6 +7,18 @@ import numpy as np
 from ..tfops import tf
 
 
+def _to_json_compatible(value):
+    if isinstance(value, dict):
+        return {k: _to_json_compatible(v) for k, v in value.items()}
+    if isinstance(value, (list, tuple)):
+        return [_to_json_compatible(v) for v in value]
+    if isinstance(value, np.ndarray):
+        return value.tolist()
+    if isinstance(value, np.generic):
+        return value.item()
+    return value
+
+
 def save_params(model, path, model_name):
     hparams = dict()
     arg_names = list(inspect.signature(model.__init__).parameters.keys())
@@ -19,7 +31,9 @@ def save_params(model, path, model_name):
 
     param_path = os.path.join(path, f"{model_name}_hyper_parameters.json")
     with open(param_path, "w") as f:
-        json.dump(hparams, f, separators=(",", ":"), indent=4)
+        json.dump(
+            _to_json_compatible(hparams), f, separators=(",", ":"), indent=4
+        )
 
 
 def load_params(path, data_info, model_name):
