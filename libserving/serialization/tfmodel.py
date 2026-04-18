@@ -7,6 +7,7 @@ from recora.utils.misc import colorize
 from .common import (
     check_model_exists,
     check_path_exists,
+    prepare_saved_model_export_path,
     save_features,
     save_id_mapping,
     save_model_name,
@@ -46,6 +47,7 @@ def save_tf_serving_model(path: str, model: TfBase, version: int):
 
     if os.path.isdir(export_path):
         check_model_exists(export_path)
+    prepare_saved_model_export_path(export_path)
 
     builder = tf.saved_model.builder.SavedModelBuilder(export_path)
     inputs, outputs = build_inputs_outputs(model)

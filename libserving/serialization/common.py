@@ -92,3 +92,8 @@ def check_model_exists(export_path: str):  # pragma: no cover
         elif choice in ["no", "n"]:
             print(f"{colorize('refused to remove, then exit...', 'red')}")
             sys.exit(0)
+
+
+def prepare_saved_model_export_path(export_path: str):
+    os.makedirs(export_path, exist_ok=True)
+    os.makedirs(os.path.join(export_path, "variables"), exist_ok=True)
